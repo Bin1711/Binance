@@ -55,7 +55,7 @@ def get_data(syms, frequency, start, end = datetime.now()):
                 print('There is no {sym} data in database.'.format(sym = sym))
                 continue
             else:
-                with zip_ref.open('data/'+'BTCUSDT.json', 'r') as f:
+                with zip_ref.open('data/' + sym + '.json', 'r') as f:
                     df = json.loads(f.read())
                     df = pd.DataFrame(df, columns = 
                                       ['time', 'open', 'high', 'low', 'close', 

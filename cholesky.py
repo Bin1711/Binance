@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import json
 END_POINT = "https://api.binance.us"
 
@@ -21,7 +22,7 @@ def covariance(x, y):
     cov = numerator / denominator
     return cov
 
-def get_cov_into_matrix(name):
+def get_cov_into_matrix(name): #sorry, this should be corr instead of cov
     s = []
     for i in name:
         s.append(close_column(i))
@@ -36,4 +37,31 @@ def get_cov_into_matrix(name):
 def get_cholesky(name):
     arr = get_cov_into_matrix(name)
     L = np.linalg.cholesky(arr)
-    return L   
+    return L
+
+def cholesky(data):
+    # Thanh's version
+    """
+    This function computes cholesky matrix.
+
+    Parameters
+    ----------
+    data : dict
+        This is dictionary data got from function get_data() in get_data.py
+    
+    Returns
+    -------
+    cholesky : np.array
+        This is cholesky matrix.
+    """
+    # create new dataframe contains returns of all symbols
+    returns_df = pd.DataFrame(columns = data.keys())
+    for sym in data.keys():
+        returns_df[sym] = data[sym]['close'].pct_change()
+    
+    # compute correlation matrix
+    cov_matrix = returns_df.corr()
+    
+    # compute cholesky matrix
+    cholesky = np.linalg.cholesky(cov_matrix)
+    return cholesky
