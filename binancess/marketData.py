@@ -5,7 +5,7 @@ from requests.models import REDIRECT_STATI
 from toolss import jsonProcess
 import time, datetime
 END_POINT = "https://api.binance.com"
-class marketData: 
+class MarketData: 
     def __init__(self, symbol,eSymbol = "USDT"):
         """ 
         Source of Data for exchanging rate between a couple of assets(cryto and forex). If there is only one parameter, it is assumed that this will be converted to USD.
@@ -26,7 +26,8 @@ class marketData:
         :return: return text in json type
         """
         if endDate == "now":
-            endDate = str(int(datetime.datetime.now().timestamp())*1000)
+            endDate = int(datetime.datetime.now().timestamp()) * 1000
+        startDate, endDate = str(startDate), str(endDate)
         endPoint = END_POINT + "/api/v3/klines"
         url = endPoint + "?symbol=" + self.symbol + self.eSymbol + "&" +"interval=" + interval +"&startTime=" + startDate  +"&endTime=" + endDate +"&limit=1000"
         
@@ -38,22 +39,47 @@ class marketData:
         return response.text
 
    
-    def getCandlesticks(self,startDate, endDate="now"):
+    def getCandlesticks(self,startDate, endDate=None, filename=None):
         """
-        Get Candles Data From API In An Specific Interval
-        :param interval: The interval of an candlestick ("1m","5m","1h","5h","1d","1m","1y")
-        :param startDate: The start UTC+0 Human Time in type: timestamp format
-        :param endDate: The end Human UTC+0 Time in type: timestamp format (default: now)
-        :return: a json file
+        Get Candles Data From API In An Specific Interval and write into the specified filename
+        /!\ Delete existing file
+
+        Parameters:
+            interval: 
+                The interval of an candlestick ("1m","5m","1h","5h","1d","1m","1y")
+            startDate: int
+                The start UTC+0 Human Time in ms in Unix Timestamp
+                Ex: 1642527663000
+            endDate: int
+                The start UTC+0 Human Time in ms in Unix Timestamp, "now" for now
+                Ex: 1642527663000, "now"
+                Default: "now"
+            filename: string
+                Name of file to be written into (path: ./data/{filename}.json)
+                Ex: "BTCUSDT"
+                Default: {self.symbol + self.eSymbol}
         """
-        if endDate == "now":
-            endDate = str(int(datetime.datetime.now().timestamp())*1000)
-        while startDate<endDate:
+        if endDate is None:
+            endDate = int(datetime.datetime.now().timestamp()) * 1000
+
+        if filename is None:
+            filename = self.symbol + self.eSymbol
+        
+        path = './data/'+filename+".json"
+        if os.path.exists(path):
+            os.remove(path)
+
+        while startDate < endDate:
+            print('r')
             responseText = self.getCandlesticksWithLimit1000("1m",startDate,endDate)
             tmp = json.loads(responseText)
+            
+            if len(tmp) == 0: 
+                break
+            
             tmpEndDate = tmp[len(tmp)-1][0]
-            startDate = str(tmpEndDate +60000)
-            if os.path.exists('./data/'+self.symbol+self.eSymbol+".json"): 
+            startDate = tmpEndDate + 1
+            if os.path.exists(path): 
                 jsonProcess.deleteLastCharacterInJsonFile(self.symbol+self.eSymbol)
                 jsonProcess.transferDataToJsonFile(","+responseText[1:],self.symbol+self.eSymbol)
             else:
