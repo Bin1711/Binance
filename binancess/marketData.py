@@ -39,7 +39,7 @@ class MarketData:
         return response.text
 
    
-    def getCandlesticks(self,startDate, endDate=None, filename=None):
+    def getCandlesticks(self, startDate, endDate=None, interval=None, filename=None):
         """
         Get Candles Data From API In An Specific Interval and write into the specified filename
         /!\ Delete existing file
@@ -64,6 +64,9 @@ class MarketData:
 
         if filename is None:
             filename = self.symbol + self.eSymbol
+
+        if interval is None:
+            interval = '1m'
         
         path = './data/'+filename+".json"
         if os.path.exists(path):
@@ -71,7 +74,7 @@ class MarketData:
 
         while startDate < endDate:
             print('r')
-            responseText = self.getCandlesticksWithLimit1000("1m",startDate,endDate)
+            responseText = self.getCandlesticksWithLimit1000(interval,startDate,endDate)
             tmp = json.loads(responseText)
             
             if len(tmp) == 0: 
