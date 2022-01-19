@@ -9,7 +9,7 @@ import json
 
 gauth = GoogleAuth()
 drive = GoogleDrive(gauth)
-def upload_to_drive(start_time, symbol, data):
+def upload_to_drive(start_time: int, symbol: str, data:str ):
     """
         Upload file json to drive under name: symbol_start_time.json
         Interval is 1m
@@ -32,3 +32,9 @@ def upload_to_drive(start_time, symbol, data):
     tmpFile = drive.CreateFile({'parents': [{'id': '1X21fyv4EdxngVuZQ2lrk8XcV3PezCNUy'}],'title':fileName,'mimeType':'application/json'})
     tmpFile.SetContentString(data)
     tmpFile.Upload()
+
+
+def get_file(start_time: int, symbol: str):
+    filename = symbol + '_' + str(start_time) +'.json'
+    file_list = drive.ListFile({'q': f"title='{filename}' and trashed=false"}).GetList()
+    return file_list[0] if len(file_list) != 0 else None
