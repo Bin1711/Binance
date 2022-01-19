@@ -12,9 +12,10 @@ drive = GoogleDrive(gauth)
 def upload_to_drive(start_time, symbol, data):
     """
         Upload file json to drive under name: symbol_start_time.json
+        Interval is 1m
 
         Parameters:
-            startDate: int
+            start_time: int
                 The start UTC+0 Human Time in ms in Unix Timestamp
                 Ex: 1642527663000
             symbol: string
@@ -29,8 +30,5 @@ def upload_to_drive(start_time, symbol, data):
     for file in file_list:
         file.Delete()
     tmpFile = drive.CreateFile({'parents': [{'id': '1X21fyv4EdxngVuZQ2lrk8XcV3PezCNUy'}],'title':fileName,'mimeType':'application/json'})
-    print(f"title='{fileName}' and trashed=false")
-
-    print([f['title'] for f in file_list])
     tmpFile.SetContentString(data)
     tmpFile.Upload()

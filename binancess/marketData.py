@@ -2,8 +2,8 @@ import requests
 import json
 import os.path
 from requests.models import REDIRECT_STATI
-from toolss import jsonProcess
-import time, datetime
+from toolss import jsonProcess, GoogleDriveConnection as ggdrive
+import datetime
 END_POINT = "https://api.binance.com"
 class MarketData: 
     def __init__(self, symbol,eSymbol = "USDT"):
@@ -102,6 +102,28 @@ class MarketData:
         response = requests.request("GET", url, headers=headers, data=payload)
 
         return response.text
+
+
+    def upload_old_data(self):
+        interval = 60 * 1000
+        end_time = int(datetime.datetime.now().timestamp()) * 1000
+        
+        resp = json.loads(self.getCandlesticksWithLimit('1m', 0, 5))
+        if len(resp) == 0:
+            return
+        start_time = resp[0][0] // interval * interval
+
+        while start_time < end_time:
+            resp = self.getCandlesticksWithLimit('1m', start_time, 60, end_time)
+            body = json.loads(resp)
+
+            if len(body) == 0:
+                break
+
+            start_time = body[-1][0]
+
+            ggdrive.upload_to_drive(start_time, self.dataFile, resp)
+        
 
 
 
