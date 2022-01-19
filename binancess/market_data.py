@@ -135,16 +135,13 @@ class MarketData:
         start_time = resp[0][0] // interval * interval
 
         while start_time < end_time:
-            # print(start_time)
             exists = gdrive.get_file(start_time, self.symbol)
             if exists is not None:
                 exists = json.loads(exists.GetContentString())
                 if len(exists) != 0:
                     print('skipping file', start_time)
                     start_time = exists[-1][0] + 60000
-                else:
-                    start_time += 60 * 60 * 1000
-                continue
+                    continue
 
             resp = self.get_candlesticks_with_limit('1m', start_time, 60, end_time)
             body = json.loads(resp)
@@ -154,8 +151,27 @@ class MarketData:
 
             gdrive.upload_to_drive(start_time, self.symbol, resp)
 
-            start_time = body[-1][0] + 60000
+            start_time = body[-1][0] + interval
 
+    
+    def upload_current_data(self):
+        """
+        Upload data of this market for the last 5 mins to drive
+        """
+        interval = self.candlesticks_intervals['m']
+        end_time = int(datetime.datetime.now().timestamp()) // 60 * 60 * 1000
+        start_time = end_time - 5 * self.candlesticks_intervals['m']
+
+        while start_time < end_time:
+            resp = self.get_candlesticks_with_limit('1m', start_time, 60, end_time)
+            body = json.loads(resp)
+
+            if len(body) == 0:
+                break
+
+            gdrive.upload_to_drive(start_time, self.symbol, resp)
+
+            start_time = body[-1][0] + interval
 
 
 ### DEVELOPING
