@@ -25,6 +25,12 @@ def upload_to_drive(start_time, symbol, data):
      """
     start_time = start_time//60000 * 60000
     fileName = symbol + '_' + str(start_time) +'.json'
+    file_list = drive.ListFile({'q': f"title='{fileName}' and trashed=false"}).GetList()
+    for file in file_list:
+        file.Delete()
     tmpFile = drive.CreateFile({'parents': [{'id': '1X21fyv4EdxngVuZQ2lrk8XcV3PezCNUy'}],'title':fileName,'mimeType':'application/json'})
+    print(f"title='{fileName}' and trashed=false")
+
+    print([f['title'] for f in file_list])
     tmpFile.SetContentString(data)
     tmpFile.Upload()

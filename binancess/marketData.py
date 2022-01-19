@@ -74,7 +74,6 @@ class MarketData:
             os.remove(path)
 
         while startDate < endDate:
-            print('r')
             responseText = self.getCandlesticksWithLimit(interval,startDate,endDate)
             tmp = json.loads(responseText)
             
