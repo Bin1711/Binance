@@ -1,4 +1,3 @@
-from quickstart import gauth
 from pydrive.drive import GoogleDrive
 from zipfile import ZipFile
 from io import BytesIO
