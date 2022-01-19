@@ -21,7 +21,7 @@ def fit_sarima(data, order):
     -------
     tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
     """
-    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order=(4, 0, 3, 30))
+    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order)
     model_fit = arima.fit()
     return model_fit.params
 
@@ -44,7 +44,7 @@ def get_order(data):
 
 
 def simulate_sarima(data, order, p, d, q, P, D, Q, s, number_of_data):
-    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order=(4, 0, 3, 30))
+    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order)
     t = arima.simulate(p, d, q, P, D, Q, s, number_of_data)
     return t
 
@@ -56,6 +56,7 @@ def construct_price_series(data, first, day):
     ----------
     data : data series (which is return data simulated)
     first: first item of the data series
+    day: first day in the original time series
     
     Returns
     -------
