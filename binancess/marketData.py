@@ -17,7 +17,7 @@ class MarketData:
         self.dataFile = symbol + eSymbol
 
 
-    def getCandlesticksWithLimit(self, interval,startDate, limit, endDate="now"):
+    def getCandlesticksWithLimit(self, interval,startDate, limit=1000, endDate="now"):
         """
         Get Candles Data From API In An Specific Interval With Limit 1000 Candle
         :param interval: The interval of an candlestick ("1m","5m","1h","5h","1d","1m","1y")
@@ -75,7 +75,7 @@ class MarketData:
 
         while startDate < endDate:
             print('r')
-            responseText = self.getCandlesticksWithLimit1000(interval,startDate,endDate)
+            responseText = self.getCandlesticksWithLimit(interval,startDate,endDate)
             tmp = json.loads(responseText)
             
             if len(tmp) == 0: 
