@@ -1,4 +1,5 @@
 from fileinput import filename
+import tempfile
 from turtle import title
 
 
@@ -6,8 +7,9 @@ from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth
 import json
 
-
-def upload_to_drive(start_time, symbol, data, drive):
+gauth = GoogleAuth()
+drive = GoogleDrive(gauth)
+def upload_to_drive(start_time, symbol, data):
     """
         Upload file json to drive under name: symbol_start_time.json
 
@@ -20,11 +22,9 @@ def upload_to_drive(start_time, symbol, data, drive):
                 Ex: BTCUSDT
             data: string 
                 Data which will be included in file to upload to drive
-            drive: GoogleDrive(gauth)
-                The connection to drive
      """
     start_time = start_time//60000 * 60000
     fileName = symbol + '_' + str(start_time) +'.json'
-    tmpFile = drive.CreateFile({'title': fileName, 'mimeType':'application/json'})
+    tmpFile = drive.CreateFile({'parents': [{'id': '1X21fyv4EdxngVuZQ2lrk8XcV3PezCNUy'}],'title':fileName,'mimeType':'application/json'})
     tmpFile.SetContentString(data)
     tmpFile.Upload()
