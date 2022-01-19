@@ -17,19 +17,20 @@ class MarketData:
         self.dataFile = symbol + eSymbol
 
 
-    def getCandlesticksWithLimit1000(self, interval,startDate, endDate="now"):
+    def getCandlesticksWithLimit(self, interval,startDate, limit, endDate="now"):
         """
         Get Candles Data From API In An Specific Interval With Limit 1000 Candle
         :param interval: The interval of an candlestick ("1m","5m","1h","5h","1d","1m","1y")
         :param startDate: The start UTC+0 Human Time in type: timestamp format
         :param endDate: The end Human UTC+0 Time in type: timestamp format (default: now)
+        :param limit: The maximum number of candlesticks
         :return: return text in json type
         """
         if endDate == "now":
             endDate = int(datetime.datetime.now().timestamp()) * 1000
         startDate, endDate = str(startDate), str(endDate)
         endPoint = END_POINT + "/api/v3/klines"
-        url = endPoint + "?symbol=" + self.symbol + self.eSymbol + "&" +"interval=" + interval +"&startTime=" + startDate  +"&endTime=" + endDate +"&limit=1000"
+        url = endPoint + "?symbol=" + self.symbol + self.eSymbol + "&" +"interval=" + interval +"&startTime=" + startDate  +"&endTime=" + endDate +"&limit=" + str(limit)
         
         payload={}
         headers = {}
