@@ -81,7 +81,7 @@ class MarketData:
                 break
             
             tmpEndDate = tmp[len(tmp)-1][0]
-            startDate = tmpEndDate + 1
+            startDate = tmpEndDate + 60000
             if os.path.exists(path): 
                 jsonProcess.deleteLastCharacterInJsonFile(self.symbol+self.eSymbol)
                 jsonProcess.transferDataToJsonFile(","+responseText[1:],self.symbol+self.eSymbol)
