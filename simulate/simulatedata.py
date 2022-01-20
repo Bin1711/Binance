@@ -7,7 +7,6 @@ import statsmodels
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
-from statsmodels.tsa.seasonal import seasonal_decompose
 
 def fit_sarima(data, order, seasonal_order):
     """
@@ -119,7 +118,7 @@ def Evaluate_performance(data1, data2, lags = None, style='bmh'):
     Plot the simulated price data vs the actual price.
     Compute autocorrelation and plot the ACF and PACF graph.
     """
-    t = len(data2.columns) + 1
+    t = len(data2.columns)
     with plt.style.context(style):    
         fig = plt.figure(figsize= (50, 16))
         layout = (3, t + 1)
