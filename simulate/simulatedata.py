@@ -38,10 +38,10 @@ def get_order(data):
     tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
     Example: (5, 0, 3) (0, 0, 0, 0)
     """
-    AUTO = AutoARIMA(max_p = 20, 
-                     max_q = 20, 
-                     max_P = 10,
-                     max_Q = 10,
+    AUTO = AutoARIMA(max_p = 10, 
+                     max_q = 10, 
+                     max_P = 5,
+                     max_Q = 5,
                      n_jobs = -1,
                      max_order = None)
     AUTO.fit(data['ret'][1:])
