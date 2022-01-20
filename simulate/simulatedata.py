@@ -42,6 +42,7 @@ def get_order(data):
                      max_q = 10, 
                      max_P = 5,
                      max_Q = 5,
+                     stepwise = False,
                      n_jobs = -1,
                      max_order = None)
     AUTO.fit(data['ret'][1:])
