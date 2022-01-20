@@ -99,7 +99,6 @@ def plotting_ACF(data, lags = None, ax = None):
     
     """
     sm.graphics.tsa.plot_acf(data, lags = lags, ax = ax)
-    plt.show()
     return
 
 def plotting_PACF(data, lags = None, ax = None):
@@ -113,30 +112,31 @@ def plotting_PACF(data, lags = None, ax = None):
     
     """
     sm.graphics.tsa.plot_pacf(data, lags = lags, ax = ax)
-    plt.show()
     return
 
-def Evaluate_performance(data1, data2, lags = None, figsize=(10, 8), style='bmh'):
+def Evaluate_performance(data1, data2, lags = None, style='bmh'):
     """
     Plot the simulated price data vs the actual price.
     Compute autocorrelation and plot the ACF and PACF graph.
     """
+    t = len(data2.columns) + 1
     with plt.style.context(style):    
-        fig = plt.figure(figsize=figsize)
-        layout = (3, 2)
+        fig = plt.figure(figsize= (50, 16))
+        layout = (3, t + 1)
         data1_ax = plt.subplot2grid(layout, (0, 0))
-        data2_ax = plt.subplot2grid(layout, (0, 1))
+        data2_ax = plt.subplot2grid(layout, (0, 1), colspan= t)
         acf1_ax = plt.subplot2grid(layout, (1, 0))
         pacf1_ax = plt.subplot2grid(layout, (2, 0))
-        acf2_ax = plt.subplot2grid(layout, (1, 1))
-        pacf2_ax = plt.subplot2grid(layout, (2, 1))
         
         data1.plot(ax=data1_ax)
         data2.plot(ax=data2_ax)
         data1_ax.set_title('Actual price data')
         data2_ax.set_title('simulated price data')
-        plotting_ACF(data2, lags = lags, ax = acf1_ax)
-        plotting_PACF(data2, lags = lags, ax = pacf1_ax)   
-        plotting_ACF(data2, lags = lags, ax = acf2_ax)
-        plotting_PACF(data2, lags = lags, ax = pacf2_ax)   
+        plotting_ACF(data1.pct_change(), lags = 30, ax = acf1_ax)
+        plotting_PACF(data1.pct_change(), lags = 30, ax = pacf1_ax)  
+        for i in range(10):
+                acf2_ax = plt.subplot2grid(layout, (1, i + 1))
+                pacf2_ax = plt.subplot2grid(layout, (2, i + 1)) 
+                plotting_ACF(data2[i].pct_change(), lags = 30, ax = acf2_ax)
+                plotting_PACF(data2[i].pct_change(), lags = 30, ax = pacf2_ax)   
     return
