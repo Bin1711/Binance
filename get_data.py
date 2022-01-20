@@ -4,6 +4,7 @@ from io import BytesIO
 import json
 import pandas as pd
 from datetime import datetime
+from quickstart import gauth
 
 drive = GoogleDrive(gauth)
 ''' just ignore this

@@ -9,7 +9,6 @@ import statsmodels.api as sm
 import statsmodels.tsa.api as smt
 from statsmodels.tsa.seasonal import seasonal_decompose
 
-
 def fit_sarima(data, order, seasonal_order):
     """
     This function fit the best SARIMA on this data series.
@@ -17,11 +16,10 @@ def fit_sarima(data, order, seasonal_order):
     Parameters
     ----------
     data : pd.series or np.array
-    order: (5,0,3)
-    seasonal_order: tuple Example: (4,0,2,3)
+
     Returns
     -------
-    tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
+    params: The parameters of SARIMA model after being fitted
     """
     arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order = seasonal_order)
     model_fit = arima.fit()
@@ -37,16 +35,20 @@ def get_order(data):
 
     Returns
     -------
-    2 tuple: order, and seasonal order
-    Example: ((5, 0, 3), (0, 0, 0, 0)
+    tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
+    Example: (5, 0, 3) (0, 0, 0, 0)
     """
-    AUTO = AutoARIMA()
+    AUTO = AutoARIMA(max_p = 20, 
+                     max_q = 20, 
+                     max_P = 10,
+                     max_Q = 10,
+                     n_jobs = -1,
+                     max_order = None)
     AUTO.fit(data['ret'][1:])
-    p = AUTO.model_.order
-    q = AUTO.model_.seasonal_order
-    return (p, q) 
+    return AUTO.model_.order, AUTO.model_.seasonal_order 
 
-def simulate_sarima(data, order, params, seasonal_order, number_of_data):
+
+def simulate_sarima(data, order, seasonal_order, params, number_of_data):
     """
     This function returns the simulated data.
 
@@ -54,7 +56,8 @@ def simulate_sarima(data, order, params, seasonal_order, number_of_data):
     ----------
     data : dataframe
     order: tuple (p,d,q)
-    params: params from fit.sarima
+    seasonal_order: tuple (P, D, Q, s)
+    params: params from fit_sarima()
 
     Returns
     -------
@@ -62,9 +65,9 @@ def simulate_sarima(data, order, params, seasonal_order, number_of_data):
     """
     arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order = seasonal_order)
     t = arima.simulate(params, number_of_data)
-    return t
+    return t.reset_index(drop=True)
 
-def construct_price_series(data, first, day):
+def construct_price_series(data, first, first_date, freq):
     """
     This function is required to return the series of close price.
 
@@ -72,16 +75,15 @@ def construct_price_series(data, first, day):
     ----------
     data : data series (which is return data simulated)
     first: first item of the data series
-    day: first day in the original time series
+    first_date: first day in the original time series
+    freq: frequency of data
     
     Returns
     -------
     data series: the series of close price.
     """
-    df = pd.DataFrame({'time':day,'close':first},index='time')
-    for i in len(data):
-        close = data['ret'][i] * df['close'][i]
-        df = df.append(pd.DataFrame({'time': data.index[i], 'close': close}))
+    df = first*(data.shift(1).fillna(0)+1).cumprod()
+    df.index = [first_date + i*pd.Timedelta(freq) for i in range(len(df))]
     return df
 
 def plotting_ACF(data, lags = None, ax = None):
