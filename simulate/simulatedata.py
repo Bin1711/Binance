@@ -43,9 +43,22 @@ def get_order(data):
     return AUTO.model_.order 
 
 
-def simulate_sarima(data, order, p, d, q, P, D, Q, s, number_of_data):
+def simulate_sarima(data, order, params, number_of_data):
+    """
+    This function returns the simulated data.
+
+    Parameters
+    ----------
+    data : dataframe
+    order: tuple (p,d,q)
+    params: params from fit.sarima
+
+    Returns
+    -------
+    simulated data
+    """
     arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order)
-    t = arima.simulate(p, d, q, P, D, Q, s, number_of_data)
+    t = arima.simulate(params, number_of_data)
     return t
 
 def construct_price_series(data, first, day):
