@@ -7,7 +7,7 @@ from toolss import gdrive_connection as gdrive, jsonProcess
 import datetime
 ENDPOINT = "https://api.binance.com"
 class MarketData: 
-    def __init__(self, from_symbol,to_symbol = "USDT"):
+    def __init__(self, from_symbol: str,to_symbol: str="USDT"):
         """ 
         Source of Data for exchanging rate between a couple of assets(cryto and forex). If there is only one parameter, it is assumed that this will be converted to USD.
         
@@ -27,7 +27,7 @@ class MarketData:
         }
 
 
-    def get_candlesticks_with_limit(self, interval: str,start_time: int, limit: int=1000, end_time: int=-1) -> str:
+    def get_candlesticks_with_limit(self, interval: str,start_time: int, end_time: int=-1, limit: int=1000) -> str:
         """
         Get Candles Data From API In An Specific Interval With Limit 1000 Candle
 
@@ -55,7 +55,7 @@ class MarketData:
         return response.text
 
    
-    def get_candlesticks(self, start_time, end_time=None, interval=None, filename=None):
+    def get_candlesticks(self, start_time: int, end_time: int=-1, interval: str=None, filename: str=None):
         """
         Get Candles Data From API In An Specific Interval and write into the specified filename
         /!\ Delete existing file
@@ -72,7 +72,7 @@ class MarketData:
                 Ex: "BTCUSDT"
                 Default: {self.data_file}
         """
-        if end_time is None:
+        if end_time == -1:
             end_time = int(datetime.datetime.now().timestamp()) * 1000
 
         if filename is None:
@@ -92,7 +92,7 @@ class MarketData:
             os.remove(path)
 
         while start_time < end_time:
-            response_text = self.get_candlesticks_with_limit(interval,start_time,end_time)
+            response_text = self.get_candlesticks_with_limit(interval, start_time, end_time)
             tmp = json.loads(response_text)
             
             if len(tmp) == 0: 
@@ -129,7 +129,7 @@ class MarketData:
         interval = 60 * 1000
         end_time = int(datetime.datetime.now().timestamp()) * 1000
         
-        resp = json.loads(self.get_candlesticks_with_limit('1m', 0, 5))
+        resp = json.loads(self.get_candlesticks_with_limit('1m', 0, end_time, 60))
         if len(resp) == 0:
             return
         start_time = resp[0][0] // interval * interval
@@ -143,7 +143,7 @@ class MarketData:
                     start_time = exists[-1][0] + 60000
                     continue
 
-            resp = self.get_candlesticks_with_limit('1m', start_time, 60, end_time)
+            resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
             body = json.loads(resp)
             ### At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
             if len(body) == 0:
@@ -163,7 +163,7 @@ class MarketData:
         start_time = end_time - 60 * self.candlesticks_intervals['m']
 
         while start_time < end_time:
-            resp = self.get_candlesticks_with_limit('1m', start_time, 60, end_time)
+            resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
             body = json.loads(resp)
 
             if len(body) == 0:

@@ -16,7 +16,7 @@ def upload_old_data():
 
 def upload_current_data():
     """
-    Upload data of all markets in const.COINS for the last 5 mins to drive
+    Upload data of all markets in const.COINS for the last 60 mins to drive
     """
     for m in markets.values():
         m.upload_current_data()
