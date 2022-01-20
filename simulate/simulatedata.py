@@ -7,21 +7,23 @@ import statsmodels
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
+from statsmodels.tsa.seasonal import seasonal_decompose
 
 
-def fit_sarima(data, order):
+def fit_sarima(data, order, seasonal_order):
     """
     This function fit the best SARIMA on this data series.
 
     Parameters
     ----------
     data : pd.series or np.array
-
+    order: (5,0,3)
+    seasonal_order: tuple Example: (4,0,2,3)
     Returns
     -------
     tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
     """
-    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order)
+    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order = seasonal_order)
     model_fit = arima.fit()
     return model_fit.params
 
@@ -35,15 +37,16 @@ def get_order(data):
 
     Returns
     -------
-    tuple: model_order
-    Example: (5, 0, 3) 
+    2 tuple: order, and seasonal order
+    Example: ((5, 0, 3), (0, 0, 0, 0)
     """
     AUTO = AutoARIMA()
     AUTO.fit(data['ret'][1:])
-    return AUTO.model_.order 
+    p = AUTO.model_.order
+    q = AUTO.model_.seasonal_order
+    return (p, q) 
 
-
-def simulate_sarima(data, order, params, number_of_data):
+def simulate_sarima(data, order, params, seasonal_order, number_of_data):
     """
     This function returns the simulated data.
 
@@ -57,7 +60,7 @@ def simulate_sarima(data, order, params, number_of_data):
     -------
     simulated data
     """
-    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order)
+    arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order = seasonal_order)
     t = arima.simulate(params, number_of_data)
     return t
 
