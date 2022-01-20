@@ -38,10 +38,10 @@ def get_order(data):
     tuple: the order of the best SARIMA (p, d, q) (P, D, Q, s)
     Example: (5, 0, 3) (0, 0, 0, 0)
     """
-    AUTO = AutoARIMA(max_p = 10, 
-                     max_q = 10, 
-                     max_P = 5,
-                     max_Q = 5,
+    AUTO = AutoARIMA(max_p = 7, 
+                     max_q = 7, 
+                     max_P = 3,
+                     max_Q = 3,
                      stepwise = False,
                      n_jobs = -1,
                      max_order = None)
@@ -49,7 +49,7 @@ def get_order(data):
     return AUTO.model_.order, AUTO.model_.seasonal_order 
 
 
-def simulate_sarima(data, order, seasonal_order, params, number_of_data):
+def simulate_sarima(data, order, seasonal_order, params, number_of_data, number_of_scenario = 1):
     """
     This function returns the simulated data.
 
@@ -65,8 +65,9 @@ def simulate_sarima(data, order, seasonal_order, params, number_of_data):
     simulated data
     """
     arima = statsmodels.tsa.arima.model.ARIMA(endog = data, order=order, seasonal_order = seasonal_order)
-    t = arima.simulate(params, number_of_data)
-    return t.reset_index(drop=True)
+    df = arima.simulate(params, number_of_data, repetitions = number_of_scenario)
+    df.columns = [a[1] for a in df.columns.to_flat_index()]
+    return df.reset_index(drop=True)
 
 def construct_price_series(data, first, first_date, freq):
     """
