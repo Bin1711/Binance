@@ -133,19 +133,19 @@ def Evaluate_performance(data1, data2, lags = None, style='bmh', graph = 'close'
         data1_ax.set_title('Actual price data')
         data2_ax.set_title('simulated price data')
         if graph == 'close':
-            plotting_ACF(data1, lags = 30, ax = acf1_ax)
-            plotting_PACF(data1, lags = 30, ax = pacf1_ax)  
+            plotting_ACF(data1, lags = lags, ax = acf1_ax)
+            plotting_PACF(data1, lags = lags, ax = pacf1_ax)  
             for i in range(t):
                 acf2_ax = plt.subplot2grid(layout, (1, i + 1))
                 pacf2_ax = plt.subplot2grid(layout, (2, i + 1)) 
-                plotting_ACF(data2[i], lags = 30, ax = acf2_ax)
-                plotting_PACF(data2[i], lags = 30, ax = pacf2_ax)   
+                plotting_ACF(data2[i], lags = lags, ax = acf2_ax)
+                plotting_PACF(data2[i], lags = lags, ax = pacf2_ax)   
         else:
-            plotting_ACF(data1.pct_change(), lags = 30, ax = acf1_ax)
-            plotting_PACF(data1.pct_change(), lags = 30, ax = pacf1_ax)  
+            plotting_ACF(data1.pct_change(), lags = lags, ax = acf1_ax)
+            plotting_PACF(data1.pct_change(), lags = lags, ax = pacf1_ax)  
             for i in range(t):
                 acf2_ax = plt.subplot2grid(layout, (1, i + 1))
                 pacf2_ax = plt.subplot2grid(layout, (2, i + 1)) 
-                plotting_ACF(data2[i].pct_change(), lags = 30, ax = acf2_ax)
-                plotting_PACF(data2[i].pct_change(), lags = 30, ax = pacf2_ax)
+                plotting_ACF(data2[i].pct_change(), lags = lags, ax = acf2_ax)
+                plotting_PACF(data2[i].pct_change(), lags = lags, ax = pacf2_ax)
     return
