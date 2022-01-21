@@ -147,7 +147,7 @@ class MarketData:
 
             resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
             body = json.loads(resp)
-
+            ### At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
             if len(body) == 0:
                 print(f'empty response at {start_time}, please try again later')
                 break
@@ -163,7 +163,7 @@ class MarketData:
         """
         interval = self.candlesticks_intervals['m']
         end_time = int(datetime.datetime.now().timestamp()) // 60 * 60 * 1000
-        start_time = end_time - 5 * self.candlesticks_intervals['m']
+        start_time = end_time - 60 * self.candlesticks_intervals['m']
 
         while start_time < end_time:
             resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
@@ -174,8 +174,7 @@ class MarketData:
 
             gdrive.upload_to_drive(start_time, self.symbol, resp)
 
-            start_time = body[-1][0] + interval
-
+            start_time = body[-1][0] + interval 
 
 ### DEVELOPING
     def realTimeUpdating(self): 
