@@ -16,6 +16,7 @@ def fit_sarima(data, order, seasonal_order):
     Parameters
     ----------
     data : pd.series or np.array
+    order and seasonal_order: from get_order
 
     Returns
     -------
@@ -45,7 +46,7 @@ def get_order(data):
                      stepwise = False,
                      n_jobs = -1,
                      max_order = None)
-    AUTO.fit(data['ret'][1:])
+    AUTO.fit(data)
     return AUTO.model_.order, AUTO.model_.seasonal_order 
 
 
@@ -59,6 +60,8 @@ def simulate_sarima(data, order, seasonal_order, params, number_of_data, number_
     order: tuple (p,d,q)
     seasonal_order: tuple (P, D, Q, s)
     params: params from fit_sarima()
+    number_of_data: len of data
+    number_of_senario: (default: 1)
 
     Returns
     -------
@@ -96,6 +99,7 @@ def plotting_ACF(data, lags = None, ax = None):
     ----------
     Data: close price data series
     lags: lags (default: None)
+    ax: where we plot data (default: None)
     
     """
     sm.graphics.tsa.plot_acf(data, lags = lags, ax = ax)
@@ -109,15 +113,24 @@ def plotting_PACF(data, lags = None, ax = None):
     ----------
     Data: close price data series
     lags: lags (default: None)
+    ax: where we plot data (default: None)
     
     """
     sm.graphics.tsa.plot_pacf(data, lags = lags, ax = ax)
     return
 
-def Evaluate_performance(data1, data2, lags = None, style='bmh', graph = 'close'):
+def Evaluate_performance(data1, data2, lags = None, style='bmh', isclose = True):
     """
     Plot the simulated price data vs the actual price.
     Compute autocorrelation and plot the ACF and PACF graph.
+    
+    Parameters:
+    ----------
+    Data1: actual close price
+    Data2: simulated close price
+    lags: lags (default: None)
+    style: Style of graph (dafault: 'bmh')
+    isclose: True: acf and pacf of close. False: acf and pacf of return (default: True)
     """
     t = len(data2.columns)
     with plt.style.context(style):    
@@ -132,7 +145,7 @@ def Evaluate_performance(data1, data2, lags = None, style='bmh', graph = 'close'
         data2.plot(ax=data2_ax)
         data1_ax.set_title('Actual price data')
         data2_ax.set_title('simulated price data')
-        if graph == 'close':
+        if isclose:
             plotting_ACF(data1, lags = lags, ax = acf1_ax)
             plotting_PACF(data1, lags = lags, ax = pacf1_ax)  
             for i in range(t):
