@@ -151,8 +151,13 @@ class MarketData:
             if len(body) == 0:
                 print(f'empty response at {start_time}, please try again later')
                 break
+<<<<<<< HEAD
 
             gdrive.upload_to_drive(body[0][0], self.symbol, resp)
+=======
+            ###
+            gdrive.upload_to_drive(start_time, self.symbol, resp)
+>>>>>>> main
 
             start_time = body[-1][0] + interval
 
