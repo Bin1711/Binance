@@ -137,17 +137,19 @@ class MarketData:
         start_time = resp[0][0] // interval * interval
 
         while start_time < end_time:
+            print('uploading', self.symbol, start_time, end='\r')
             exists = gdrive.get_file(start_time, self.symbol)
             if exists is not None:
                 exists = json.loads(exists.GetContentString())
                 if len(exists) != 0:
+                    print(' '*100, end='\r')
                     print('skipping file', start_time)
                     start_time = exists[-1][0] + 60000
                     continue
 
             resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
             body = json.loads(resp)
-            
+
             ### At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
             if len(body) == 0:
                 print(f'empty response at {start_time}, please try again later')
@@ -156,6 +158,8 @@ class MarketData:
             gdrive.upload_to_drive(body[0][0], self.symbol, resp)
 
             start_time = body[-1][0] + interval
+
+        print('uploaded', self.symbol, 'until time', start_time, ' ' * 100)
 
     
     def upload_current_data(self):
