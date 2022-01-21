@@ -7,6 +7,7 @@ import statsmodels
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import statsmodels.tsa.api as smt
+import math
 
 def fit_sarima(data, order, seasonal_order):
     """
@@ -120,10 +121,10 @@ def Evaluate_performance(data1, data2, lags = None, style='bmh'):
     """
     t = len(data2.columns)
     with plt.style.context(style):    
-        fig = plt.figure(figsize= (50, 16))
+        fig = plt.figure(figsize= (50, 12))
         layout = (3, t + 1)
         data1_ax = plt.subplot2grid(layout, (0, 0))
-        data2_ax = plt.subplot2grid(layout, (0, 1), colspan= t)
+        data2_ax = plt.subplot2grid(layout, (0, 1))
         acf1_ax = plt.subplot2grid(layout, (1, 0))
         pacf1_ax = plt.subplot2grid(layout, (2, 0))
         
