@@ -122,16 +122,18 @@ class MarketData:
         return response.text
 
 
-    def upload_old_data(self) -> None:
+    def upload_old_data(self, start_time: int=0) -> None:
         """
         Upload old data of this market to drive
         """
         interval = 60 * 1000
         end_time = int(datetime.datetime.now().timestamp()) * 1000
         
+        
         resp = json.loads(self.get_candlesticks_with_limit('1m', 0, end_time, 60))
         if len(resp) == 0:
-            return
+            return            
+        
         start_time = resp[0][0] // interval * interval
 
         while start_time < end_time:
@@ -147,9 +149,10 @@ class MarketData:
             body = json.loads(resp)
 
             if len(body) == 0:
+                print(f'empty response at {start_time}, please try again later')
                 break
 
-            gdrive.upload_to_drive(start_time, self.symbol, resp)
+            gdrive.upload_to_drive(body[0][0], self.symbol, resp)
 
             start_time = body[-1][0] + interval
 
