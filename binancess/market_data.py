@@ -17,6 +17,9 @@ INTERVALS = {
     'M': 30 * 7 * 24 * 3600 * 1000 
     }
 
+INTERVAL = INTERVALS['m']
+FILE_INTERVAL = INTERVALS['h']
+
 class MarketData: 
     def __init__(self, from_symbol: str,to_symbol: str="USDT"):
         """ 
@@ -130,14 +133,12 @@ class MarketData:
         """
         Upload old data of this market to drive
         """
-        interval = 60 * 1000
-        file_interval = 60 * interval
         end_time = int(datetime.datetime.now().timestamp()) * 1000
         
         resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
         if len(resp) == 0:
             return            
-        start_time = int(math.ceil(resp[0][0] / file_interval)) * file_interval
+        start_time = int(math.ceil(resp[0][0] / FILE_INTERVAL)) * FILE_INTERVAL
 
         while start_time <= end_time:
             print('uploading', self.symbol, start_time, end='\r')
@@ -146,10 +147,10 @@ class MarketData:
                 exists = json.loads(exists.GetContentString())
                 if len(exists) != 0:
                     print('skipping file', start_time, ' ' * 10)
-                    start_time += file_interval
+                    start_time += FILE_INTERVAL
                     continue
 
-            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + file_interval, file_interval // interval)
+            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, FILE_INTERVAL // INTERVAL)
             body = json.loads(resp)
 
             ### At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
@@ -162,7 +163,7 @@ class MarketData:
                 print(f'warning: less data points ({len(body)}) than expected at', start_time)
 
             gdrive.upload_to_drive(start_time, self.symbol, resp)
-            start_time += file_interval
+            start_time += FILE_INTERVAL
 
         print('uploaded', self.symbol, 'until time', start_time, ' ' * 100)
 
@@ -171,20 +172,20 @@ class MarketData:
         """
         Upload data of this market for the last 60 mins to drive
         """
-        interval = INTERVALS['m']
-        end_time = int(datetime.datetime.now().timestamp()) // 60 * 60 * 1000
-        start_time = end_time - 60 * INTERVALS['m']
+        end_time = int(datetime.datetime.now().timestamp() * 1000) // FILE_INTERVAL * FILE_INTERVAL
+        start_time = end_time - FILE_INTERVAL
 
         while start_time < end_time:
-            resp = self.get_candlesticks_with_limit('1m', start_time, end_time, 60)
+            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, 60)
             body = json.loads(resp)
 
             if len(body) == 0:
+                print('empty response at', start_time)
                 break
 
             gdrive.upload_to_drive(start_time, self.symbol, resp)
-
-            start_time = body[-1][0] + interval 
+            start_time += FILE_INTERVAL
+            
 
 ### DEVELOPING
     def realTimeUpdating(self): 
