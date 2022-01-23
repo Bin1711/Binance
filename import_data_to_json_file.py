@@ -1,5 +1,5 @@
 from binancess.MarketData import MarketData
-from toolss import jsonProcess
+from toolss import json_process
 END_POINT = "https://api.binance.us"
 # #TRASH API
 # API_KEY= "BlauCq9caQqSBHp1txb8eR2QYbay3U9xqnzrLn6EqOo1A7D7PIFwAsw8mZL47bvj"
@@ -11,8 +11,8 @@ END_POINT = "https://api.binance.us"
 def data_to_json(name, interval,startDate, endDate="now" ):
     dataSoure = MarketData(name,"USDT")
     data = dataSoure.getCandlesticks(interval,startDate, endDate)
-    data_txt = jsonProcess.printj(data)
-    jsonProcess.createNewJsonDataFile(name)
-    jsonProcess.transferDataToJsonFile(data,"./data/" + name + ".json")
+    data_txt = json_process.printj(data)
+    json_process.createNewJsonDataFile(name)
+    json_process.transferDataToJsonFile(data,"./data/" + name + ".json")
     
     
