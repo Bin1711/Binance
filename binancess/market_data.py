@@ -3,7 +3,7 @@ import requests
 import json
 import os.path
 import datetime
-from toolss import gdrive, jsonProcess
+from toolss import gdrive, json_process
 import math
 
 __all__ = ['MarketData', 'INTERVALS']
@@ -108,10 +108,10 @@ class MarketData:
             tmp_end_time = tmp[len(tmp)-1][0]
             start_time = tmp_end_time + interval_time
             if os.path.exists(path): 
-                jsonProcess.deleteLastCharacterInJsonFile(self.from_symbol+self.to_symbol)
-                jsonProcess.transferDataToJsonFile(","+response_text[1:],self.from_symbol+self.to_symbol)
+                json_process.deleteLastCharacterInJsonFile(self.from_symbol+self.to_symbol)
+                json_process.transferDataToJsonFile(","+response_text[1:],self.from_symbol+self.to_symbol)
             else:
-                jsonProcess.transferDataToJsonFile(response_text,self.from_symbol+self.to_symbol)
+                json_process.transferDataToJsonFile(response_text,self.from_symbol+self.to_symbol)
 
 
     def getRecentTrade(self):
@@ -176,7 +176,7 @@ class MarketData:
         start_time = end_time - FILE_INTERVAL
 
         while start_time < end_time:
-            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, 60)
+            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, FILE_INTERVAL // INTERVAL)
             body = json.loads(resp)
 
             if len(body) == 0:
@@ -185,7 +185,7 @@ class MarketData:
 
             gdrive.upload_to_drive(start_time, self.symbol, resp)
             start_time += FILE_INTERVAL
-            
+
 
 ### DEVELOPING
     def realTimeUpdating(self): 
