@@ -6,7 +6,7 @@ from toolss import json_process, gdrive
 from binancess.market_data import INTERVAL, FILE_INTERVAL
 
 
-def get_data(symbols, frequency: str, start, end = datetime.now()):
+def get_data(symbols, frequency: str, start, end = datetime.now(), format='%Y-%m-%d'):
     """
     Retrieved the data specified from drive as a DataFrame.
 
@@ -18,10 +18,15 @@ def get_data(symbols, frequency: str, start, end = datetime.now()):
         Ex: '15min', '4H', or '1D'
         check this link for more information: 
             https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#offset-aliases
-    start: The first date (inclusive) that data start. Represented by timestamp in ms or datetime
+    start: The first date (inclusive) that data start. Represented by str, timestamp in ms, or datetime
         Ex: 1597132080000, or datetime.datetime(2020, 8, 11, 7, 48)
-    end: The last date (inclusive) that data end. Represented by timestamp in ms or datetime. Default is now.
+    end: The last date (inclusive) that data end. Represented by str, timestamp in ms or datetime. Default is now.
         Ex: 1597125600000, or datetime.datetime(2020, 8, 11, 6, 1)
+    format: The format of `start` and `end` if of str type. Default: '%Y-%m-%d'
+        Ex: '%Y-%d-%m', '%d/%m/%y %H:%M:%S'
+        For more information on the format, check:
+            https://www.tutorialspoint.com/python/time_strptime.htm
+
 
     Returns
     -------
@@ -33,8 +38,8 @@ def get_data(symbols, frequency: str, start, end = datetime.now()):
              'ETHUSDT': dataframe}
 
     """
-    start, start_time = _parse_time(start)
-    end, end_time = _parse_time(end)
+    start, start_time = _parse_time(start, format)
+    end, end_time = _parse_time(end, format)
 
     start = start // INTERVAL * INTERVAL
     end = end // INTERVAL * INTERVAL
@@ -107,11 +112,14 @@ def _load_df_from_file(symbol: str, frequency: str):
         return new_df
 
 
-def _parse_time(time):
+def _parse_time(time, format):
     """Parse the time into timestamp in ms and datetime"""
     if type(time) == datetime:
         timestamp = int(time.timestamp() * 1000)
         dt = time
+    elif type(time) == str:
+        dt = datetime.strptime(time, format)
+        timestamp = int(dt.timestamp() * 1000)
     else:
         timestamp = time
         dt = datetime.utcfromtimestamp(time / 1000)
