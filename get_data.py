@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from toolss import json_process, gdrive
 from binancess.market_data import INTERVAL, FILE_INTERVAL
 from binancess.const import TIME_FORMAT
+from toolss import convert
 
 
 def get_data(symbols, frequency: str, start, end = datetime.now(), format=TIME_FORMAT):
@@ -62,7 +63,7 @@ def _download_data(symbol: str, start: int, end: int):
     while t <= end:
         file = gdrive.get_file(time=t, symbol=symbol)
         if file is None:
-            print('file not found:', symbol, datetime.utcfromtimestamp(t/1000).strftime(TIME_FORMAT))
+            print('file not found:', symbol, convert.timestampms_to_utc(t))
             t += FILE_INTERVAL
             continue
 
