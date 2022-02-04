@@ -7,8 +7,6 @@ from binancess.const import TIME_FORMAT
 from toolss import convert, gdrive, json_process
 import math
 
-__all__ = ['MarketData', 'INTERVALS']
-
 ENDPOINT = "https://api.binance.com"
 INTERVALS = {
     'm': 60 * 1000,
@@ -17,7 +15,6 @@ INTERVALS = {
     'w': 7 * 24 * 3600 * 1000,
     'M': 30 * 7 * 24 * 3600 * 1000 
     }
-
 INTERVAL = INTERVALS['m']
 FILE_INTERVAL = INTERVALS['w']
 
@@ -30,9 +27,14 @@ class MarketData:
             from_symbol: The symbol of Crypto to be converted
             to_symbol: The symbol of Crypto convert to (default: 'USDT')
         """
-        self.from_symbol = from_symbol
-        self.to_symbol = to_symbol
+        self.from_symbol, self.to_symbol = from_symbol, to_symbol
         self.symbol = from_symbol + to_symbol
+
+
+    def get_filename(self, time):
+        if type(time) == int:
+            time = convert.timestampms_to_utc(time)
+        return self.symbol + '_' + time
 
 
     def get_candlesticks_with_limit(self, interval: str,start_time: int, end_time: int=-1, limit: int=1000) -> str:
@@ -53,11 +55,10 @@ class MarketData:
             end_time = int(datetime.now().timestamp()) * 1000
         start_time, end_time = str(start_time), str(end_time)
         endpoint = ENDPOINT + "/api/v3/klines"
-        url = endpoint + "?symbol=" + self.from_symbol + self.to_symbol + "&" +"interval=" + interval +"&startTime=" + start_time  +"&endTime=" + end_time +"&limit=" + str(limit)
+        url = f'{endpoint}?symbol={self.symbol}&interval={interval}&startTime={start_time}&endTime={end_time}&limit={limit}'
         
         payload={}
         headers = {}
-
         response = requests.request("GET", url, headers=headers, data=payload)
         
         return response.text
@@ -99,12 +100,10 @@ class MarketData:
         while start_time < end_time:
             response_text = self.get_candlesticks_with_limit(interval, start_time, end_time)
             tmp = json.loads(response_text)
-            
             if len(tmp) == 0:
                 break
-            
-            tmp_end_time = tmp[len(tmp)-1][0]
-            start_time = tmp_end_time + interval_time
+
+            start_time = tmp[len(tmp)-1][0] + interval_time
             if os.path.exists(path): 
                 json_process.deleteLastCharacterInJsonFile(filename)
                 json_process.transferDataToJsonFile(","+response_text[1:], filename)
@@ -140,10 +139,10 @@ class MarketData:
             return
         start_time = resp[0][0] // FILE_INTERVAL * FILE_INTERVAL
 
-
-        while start_time <= end_time:
+        while start_time < end_time:
             utctime = convert.timestampms_to_utc(start_time)
-            exists = gdrive.get_file(utctime, self.symbol)
+            tofile = self.get_filename(utctime)
+            exists = gdrive.get_file(tofile)
             if exists is not None:
                 print('skipping file', utctime, ' ' * 10)
                 start_time += FILE_INTERVAL
@@ -157,11 +156,10 @@ class MarketData:
                 print(f'empty response at {utctime} for {fromfile}, please try again later')
                 break
 
-            tofile = self.symbol + '_' + utctime
             gdrive.upload_file_to_drive(fromfile, tofile)
             start_time += FILE_INTERVAL
 
-        print('uploaded', self.symbol, 'until time', convert.timestampms_to_utc(start_time), ' ' * 10)
+        print('uploaded', self.symbol, 'until time', convert.timestampms_to_utc(end_time, '%Y-%m-%d %H:%M:%S'), ' ' * 10)
 
     
     def upload_current_data(self):
@@ -172,10 +170,10 @@ class MarketData:
         prev_time = (start_time // FILE_INTERVAL - 1) * FILE_INTERVAL
         start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
 
-        prev_file = self.symbol + '_' + convert.timestampms_to_utc(prev_time)
+        prev_file = self.get_filename(prev_time)
         if gdrive.download_file_from_drive(prev_file, self.symbol):
             with open(f'./data/{self.symbol}.json') as f:
-                if len(json.load(f)) < FILE_INTERVAL / INTERVAL:
+                if len(json.load(f)) < (FILE_INTERVAL / INTERVAL):
                     self.upload_old_data(prev_time)
         else:
             self.upload_old_data(start_time)

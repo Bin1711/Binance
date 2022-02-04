@@ -60,7 +60,7 @@ def _download_data(symbol: str, start: int, end: int):
     t = start
     json_process.clearDataInJsonFile(symbol)
     while t <= end:
-        file = gdrive.get_file(t, symbol)
+        file = gdrive.get_file(time=t, symbol=symbol)
         if file is None:
             print('file not found:', symbol, datetime.utcfromtimestamp(t/1000).strftime(TIME_FORMAT))
             t += FILE_INTERVAL

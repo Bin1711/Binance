@@ -7,6 +7,7 @@ from pydrive.drive import GoogleDrive
 from pydrive.auth import GoogleAuth
 import json
 from binancess.const import TIME_FORMAT
+from toolss import convert
 
 gauth = GoogleAuth()
 drive = GoogleDrive(gauth)
@@ -49,20 +50,22 @@ def upload_file_to_drive(fromfile: str, tofile: str):
 def download_file_from_drive(fromfile: str, tofile: str):
     fromfile += '.json'
     tofile += '.json'
-    file_list = drive.ListFile({'q': f"title='{fromfile}' and trashed=false"}).GetList()
-    if len(file_list) == 0:
+    file = get_file(fromfile)
+    if file is None:
         return False
-    file_list[0].GetContentFile(f'./data/{tofile}')
+    file.GetContentFile(f'./data/{tofile}')
     return True
 
 
 
-def get_file(utctime, symbol: str):
+def get_file(filename:str=None, time=None, symbol:str=None):
     """
     Get existing records of `upload_to_drive`
     """
-    if type(utctime) == int:
-        utctime = datetime.utcfromtimestamp(utctime // 1000).strftime(TIME_FORMAT)
-    filename = symbol + '_' + utctime +'.json'
+    if filename is None:
+        if type(time) == int:
+            time = convert.timestampms_to_utc(time)
+        filename = symbol + '_' + time +'.json'
+        
     file_list = drive.ListFile({'q': f"title='{filename}' and trashed=false"}).GetList()
     return file_list[0] if len(file_list) != 0 else None
