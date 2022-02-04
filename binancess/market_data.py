@@ -167,8 +167,8 @@ class MarketData:
         """
         Upload data of this market for the last 60 mins to drive
         """
-        end_time = int(datetime.now().timestamp() * 1000) // FILE_INTERVAL * FILE_INTERVAL
-        start_time = end_time - FILE_INTERVAL
+        start_time = int(datetime.now().timestamp() * 1000 - INTERVALS['h'])
+        start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
 
         while start_time < end_time:
             resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, FILE_INTERVAL // INTERVAL)
