@@ -4,9 +4,11 @@ import pandas as pd
 from datetime import datetime, timedelta
 from toolss import json_process, gdrive
 from binancess.market_data import INTERVAL, FILE_INTERVAL
+from binancess.const import TIME_FORMAT
+from toolss import convert
 
 
-def get_data(symbols, frequency: str, start, end = datetime.now(), format='%Y-%m-%d'):
+def get_data(symbols, frequency: str, start, end = datetime.now(), format=TIME_FORMAT):
     """
     Retrieved the data specified from drive as a DataFrame.
 
@@ -41,8 +43,8 @@ def get_data(symbols, frequency: str, start, end = datetime.now(), format='%Y-%m
     start, start_time = _parse_time(start, format)
     end, end_time = _parse_time(end, format)
 
-    start = start // INTERVAL * INTERVAL
-    end = end // INTERVAL * INTERVAL
+    start = start // FILE_INTERVAL * FILE_INTERVAL
+    end = (end // FILE_INTERVAL + 1) * FILE_INTERVAL
     end_time += timedelta(seconds=30)
 
     data = {}
@@ -59,9 +61,9 @@ def _download_data(symbol: str, start: int, end: int):
     t = start
     json_process.clearDataInJsonFile(symbol)
     while t <= end:
-        file = gdrive.get_file(t, symbol)
+        file = gdrive.get_file(time=t, symbol=symbol)
         if file is None:
-            print('file not found:', t, symbol)
+            print('file not found:', symbol, convert.timestampms_to_utc(t))
             t += FILE_INTERVAL
             continue
 
