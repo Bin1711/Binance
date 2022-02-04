@@ -3,7 +3,8 @@ import requests
 import json
 import os.path
 from datetime import datetime
-from toolss import gdrive, json_process
+from binancess.const import TIME_FORMAT
+from toolss import convert, gdrive, json_process
 import math
 
 __all__ = ['MarketData', 'INTERVALS']
@@ -136,12 +137,12 @@ class MarketData:
         
         resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
         if len(resp) == 0:
-            return            
+            return
         start_time = resp[0][0] // FILE_INTERVAL * FILE_INTERVAL
 
 
         while start_time <= end_time:
-            utctime = datetime.utcfromtimestamp(start_time // 1000).strftime('%Y-%m-%d')
+            utctime = convert.timestampms_to_utc(start_time)
             exists = gdrive.get_file(utctime, self.symbol)
             if exists is not None:
                 print('skipping file', utctime, ' ' * 10)
@@ -160,7 +161,7 @@ class MarketData:
             gdrive.upload_file_to_drive(fromfile, tofile)
             start_time += FILE_INTERVAL
 
-        print('uploaded', self.symbol, 'until time', start_time, ' ' * 100)
+        print('uploaded', self.symbol, 'until time', convert.timestampms_to_utc(start_time), ' ' * 10)
 
     
     def upload_current_data(self):
@@ -168,18 +169,16 @@ class MarketData:
         Upload data of this market for the last 60 mins to drive
         """
         start_time = int(datetime.now().timestamp() * 1000 - INTERVALS['h'])
+        prev_time = (start_time // FILE_INTERVAL - 1) * FILE_INTERVAL
         start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
 
-        while start_time < end_time:
-            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, FILE_INTERVAL // INTERVAL)
-            body = json.loads(resp)
-
-            if len(body) == 0:
-                print('empty response at', start_time)
-                break
-
-            gdrive.upload_to_drive(start_time, self.symbol, resp)
-            start_time += FILE_INTERVAL
+        prev_file = self.symbol + '_' + convert.timestampms_to_utc(prev_time)
+        if gdrive.download_file_from_drive(prev_file, self.symbol):
+            with open(f'./data/{self.symbol}.json') as f:
+                if len(json.load(f)) < FILE_INTERVAL / INTERVAL:
+                    self.upload_old_data(prev_time)
+        else:
+            self.upload_old_data(start_time)
 
 
 ### DEVELOPING

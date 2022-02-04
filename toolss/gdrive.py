@@ -46,6 +46,17 @@ def upload_file_to_drive(fromfile: str, tofile: str):
 
 
 
+def download_file_from_drive(fromfile: str, tofile: str):
+    fromfile += '.json'
+    tofile += '.json'
+    file_list = drive.ListFile({'q': f"title='{fromfile}' and trashed=false"}).GetList()
+    if len(file_list) == 0:
+        return False
+    file_list[0].GetContentFile(f'./data/{tofile}')
+    return True
+
+
+
 def get_file(utctime, symbol: str):
     """
     Get existing records of `upload_to_drive`
