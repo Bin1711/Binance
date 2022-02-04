@@ -166,7 +166,7 @@ class MarketData:
         """
         Upload data of this market for the last 60 mins to drive
         """
-        start_time = int(datetime.now().timestamp() * 1000 - INTERVALS['h'])
+        start_time = int(datetime.now().timestamp() * 1000 - 2 * INTERVALS['h'])
         prev_time = (start_time // FILE_INTERVAL - 1) * FILE_INTERVAL
         start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
 
