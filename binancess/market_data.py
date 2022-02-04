@@ -2,7 +2,7 @@ from tracemalloc import start
 import requests
 import json
 import os.path
-import datetime
+from datetime import datetime
 from toolss import gdrive, json_process
 import math
 
@@ -18,7 +18,7 @@ INTERVALS = {
     }
 
 INTERVAL = INTERVALS['m']
-FILE_INTERVAL = INTERVALS['h']
+FILE_INTERVAL = INTERVALS['w']
 
 class MarketData: 
     def __init__(self, from_symbol: str,to_symbol: str="USDT"):
@@ -49,7 +49,7 @@ class MarketData:
             text in json type
         """
         if end_time == -1:
-            end_time = int(datetime.datetime.now().timestamp()) * 1000
+            end_time = int(datetime.now().timestamp()) * 1000
         start_time, end_time = str(start_time), str(end_time)
         endpoint = ENDPOINT + "/api/v3/klines"
         url = endpoint + "?symbol=" + self.from_symbol + self.to_symbol + "&" +"interval=" + interval +"&startTime=" + start_time  +"&endTime=" + end_time +"&limit=" + str(limit)
@@ -62,7 +62,7 @@ class MarketData:
         return response.text
 
    
-    def get_candlesticks(self, start_time: int, end_time: int=-1, interval: str=None, filename: str=None):
+    def get_candlesticks(self, interval: str='1m', start_time: int=0, end_time: int=-1, filename: str=None):
         """
         Get Candles Data From API In An Specific Interval and write into the specified filename
         /!\ Delete existing file
@@ -80,13 +80,10 @@ class MarketData:
                 Default: {self.data_file}
         """
         if end_time == -1:
-            end_time = int(datetime.datetime.now().timestamp()) * 1000
+            end_time = int(datetime.now().timestamp()) * 1000
 
         if filename is None:
-            filename = self.from_symbol + self.to_symbol
-
-        if interval is None:
-            interval = '1m'
+            filename = self.symbol
 
         try:
             interval_time = int(interval[:-1]) * INTERVALS[interval[-1]]
@@ -102,16 +99,18 @@ class MarketData:
             response_text = self.get_candlesticks_with_limit(interval, start_time, end_time)
             tmp = json.loads(response_text)
             
-            if len(tmp) == 0: 
+            if len(tmp) == 0:
                 break
             
             tmp_end_time = tmp[len(tmp)-1][0]
             start_time = tmp_end_time + interval_time
             if os.path.exists(path): 
-                json_process.deleteLastCharacterInJsonFile(self.from_symbol+self.to_symbol)
-                json_process.transferDataToJsonFile(","+response_text[1:],self.from_symbol+self.to_symbol)
+                json_process.deleteLastCharacterInJsonFile(filename)
+                json_process.transferDataToJsonFile(","+response_text[1:], filename)
             else:
-                json_process.transferDataToJsonFile(response_text,self.from_symbol+self.to_symbol)
+                json_process.transferDataToJsonFile(response_text, filename)
+
+        return filename
 
 
     def getRecentTrade(self):
@@ -133,36 +132,32 @@ class MarketData:
         """
         Upload old data of this market to drive
         """
-        end_time = int(datetime.datetime.now().timestamp()) * 1000
+        end_time = int(datetime.now().timestamp()) * 1000
         
         resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
         if len(resp) == 0:
             return            
-        start_time = int(math.ceil(resp[0][0] / FILE_INTERVAL)) * FILE_INTERVAL
+        start_time = resp[0][0] // FILE_INTERVAL * FILE_INTERVAL
+
 
         while start_time <= end_time:
-            print('uploading', self.symbol, start_time, end='\r')
-            exists = gdrive.get_file(start_time, self.symbol)
+            utctime = datetime.utcfromtimestamp(start_time // 1000).strftime('%Y-%m-%d')
+            exists = gdrive.get_file(utctime, self.symbol)
             if exists is not None:
-                exists = json.loads(exists.GetContentString())
-                if len(exists) != 0:
-                    print('skipping file', start_time, ' ' * 10)
-                    start_time += FILE_INTERVAL
-                    continue
+                print('skipping file', utctime, ' ' * 10)
+                start_time += FILE_INTERVAL
+                continue
+            
+            print('uploading', self.symbol, utctime, end='\r')
+            fromfile = self.get_candlesticks('1m', start_time, start_time + FILE_INTERVAL - INTERVAL // 2)
 
-            resp = self.get_candlesticks_with_limit('1m', start_time, start_time + FILE_INTERVAL, FILE_INTERVAL // INTERVAL)
-            body = json.loads(resp)
-
-            ### At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
-            if len(body) == 0:
-                print(f'empty response at {start_time}, please try again later')
+            # At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
+            if os.path.getsize('./data/' + fromfile + '.json') < 100:
+                print(f'empty response at {utctime} for {fromfile}, please try again later')
                 break
-            if start_time != body[0][0]:
-                print('warning: start_time different from first entry at', start_time)
-            if len(body) < 60:
-                print(f'warning: less data points ({len(body)}) than expected at', start_time)
 
-            gdrive.upload_to_drive(start_time, self.symbol, resp)
+            tofile = self.symbol + '_' + utctime
+            gdrive.upload_file_to_drive(fromfile, tofile)
             start_time += FILE_INTERVAL
 
         print('uploaded', self.symbol, 'until time', start_time, ' ' * 100)
@@ -172,7 +167,7 @@ class MarketData:
         """
         Upload data of this market for the last 60 mins to drive
         """
-        end_time = int(datetime.datetime.now().timestamp() * 1000) // FILE_INTERVAL * FILE_INTERVAL
+        end_time = int(datetime.now().timestamp() * 1000) // FILE_INTERVAL * FILE_INTERVAL
         start_time = end_time - FILE_INTERVAL
 
         while start_time < end_time:
@@ -189,7 +184,7 @@ class MarketData:
 
 ### DEVELOPING
     def realTimeUpdating(self): 
-        tmpEndDate = str(int(datetime.datetime.now().timestamp())*1000)
+        tmpEndDate = str(int(datetime.now().timestamp())*1000)
         while True: 
             self.get_candlesticks("1m","")
 ### DEVELOPING

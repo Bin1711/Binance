@@ -32,10 +32,23 @@ def upload_to_drive(start_time: int, symbol: str, data:str ):
     tmp_file.Upload()
 
 
-def get_file(start_time: int, symbol: str):
+
+def upload_file_to_drive(fromfile: str, tofile: str):
+    fromfile += '.json'
+    tofile += '.json'
+    file_list = drive.ListFile({'q': f"title='{tofile}' and trashed=false"}).GetList()
+    for file in file_list:
+        file.Delete()
+    tmp_file = drive.CreateFile({'parents': [{'id': '1X21fyv4EdxngVuZQ2lrk8XcV3PezCNUy'}],'title':tofile,'mimeType':'application/json'})
+    tmp_file.SetContentFile(f'./data/{fromfile}')
+    tmp_file.Upload()
+
+
+
+def get_file(utctime: int, symbol: str):
     """
     Get existing records of `upload_to_drive`
     """
-    filename = symbol + '_' + str(start_time) +'.json'
+    filename = symbol + '_' + utctime +'.json'
     file_list = drive.ListFile({'q': f"title='{filename}' and trashed=false"}).GetList()
     return file_list[0] if len(file_list) != 0 else None
