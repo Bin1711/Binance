@@ -44,7 +44,6 @@ def get_data(symbols, frequency: str, start, end = datetime.now(), format=TIME_F
     end, end_time = _parse_time(end, format)
 
     start = start // FILE_INTERVAL * FILE_INTERVAL
-    end = (end // FILE_INTERVAL + 1) * FILE_INTERVAL
     end_time += timedelta(seconds=30)
 
     data = {}
