@@ -23,16 +23,12 @@ def simulate_open_price_and_close (data):
     mean_open = data['open'].mean()
     chol = cholesky.cholesky2(data)
     data1 = pd.DataFrame(data, columns = ['time', 'open', 'close'], index='time')
-    data1['open'] = normalize_or_standardize_data(data['open'].pct_change(), is_normalize= False) #check if we need pact_change()
-    data1['close'] = normalize_or_standardize_data(data['open'].pct_change(), is_normalize= False)
+    data1['open'] = normalize_or_standardize_data(data['open'], is_normalize= False) 
+    data1['close'] = normalize_or_standardize_data(data['open'], is_normalize= False)
     simulate_corr_rets = pd.DataFrame(np.matmul(chol, data1), index =['open', 'close']).T/100
     res = pd.DataFrame(simulate_corr_rets, columns = ['time', 'open', 'close'], index='time')
-    res['open'] = mulback_cholesky(simulate_corr_rets['open',  False, var_open, mean_open ])
-    res['close'] = mulback_cholesky(simulate_corr_rets['open', False, var_close,  mean_close ])
-    t1 = simulatedata.construct_price_series(res['close'],data['close'][0], data.index[0]) # this and the line below will only be used if we use pct_change above
-    t2= simulatedata.construct_price_series(res['open'], data['open'][0], data.index[0])
-    res['close'] = t1['close']
-    res['open'] = t2['open']
+    res['open'] = mulback_cholesky(simulate_corr_rets['open',  False, var_open, mean_open])
+    res['close'] = mulback_cholesky(simulate_corr_rets['open', False, var_close,  mean_close])
     return res
 
 def compute_std (data):
