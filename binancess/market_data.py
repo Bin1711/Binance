@@ -132,7 +132,7 @@ class MarketData:
         """
         Upload old data of this market to drive
         """
-        end_time = int(datetime.now().timestamp()) * 1000
+        end_time = (int(datetime.now().timestamp()) * 1000) // FILE_INTERVAL * FILE_INTERVAL
         
         resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
         if len(resp) == 0:
