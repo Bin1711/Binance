@@ -34,7 +34,7 @@ class MarketData:
     def get_filename(self, time):
         if type(time) == int:
             time = convert.timestampms_to_utc(time)
-        return self.symbol + '_' + time
+        return self.symbol + '_' + time + +'.json'
 
 
     def get_candlesticks_with_limit(self, interval: str,start_time: int, end_time: int=-1, limit: int=1000) -> str:

@@ -4,6 +4,7 @@ import get_data
 from toolss import json_process
 import json
 import csv
+from datetime import datetime
 from toolss import gdrive
 from binancess import upload, market_data
 
@@ -12,5 +13,3 @@ from binancess import upload, market_data
 # btc.upload_current_data()
 
 # should be of size 1441 x 6
-df = get_data.get_data(['BTCUSDT'], '1T', '2020-01-01', '2020-01-02')
-print(df)
