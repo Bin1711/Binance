@@ -34,7 +34,7 @@ class MarketData:
     def get_filename(self, time):
         if type(time) == int:
             time = convert.timestampms_to_utc(time)
-        return self.symbol + '_' + time + +'.json'
+        return self.symbol + '_' + time 
 
 
     def get_candlesticks_with_limit(self, interval: str,start_time: int, end_time: int=-1, limit: int=1000) -> str:
@@ -142,7 +142,7 @@ class MarketData:
         while start_time < end_time:
             utctime = convert.timestampms_to_utc(start_time)
             tofile = self.get_filename(utctime)
-            exists = gdrive.get_file(tofile)
+            exists = gdrive.get_file(tofile + ".json")
             if exists is not None:
                 print('skipping file', utctime, ' ' * 10)
                 start_time += FILE_INTERVAL

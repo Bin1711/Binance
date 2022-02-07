@@ -13,3 +13,4 @@ from binancess import upload, market_data
 # btc.upload_current_data()
 
 # should be of size 1441 x 6
+upload.upload_old_data()
