@@ -66,6 +66,6 @@ def get_file(filename:str=None, time=None, symbol:str=None):
         if type(time) == int:
             time = convert.timestampms_to_utc(time)
         filename = symbol + '_' + time +'.json'
-        
+    print(filename)
     file_list = drive.ListFile({'q': f"title='{filename}' and trashed=false"}).GetList()
     return file_list[0] if len(file_list) != 0 else None
