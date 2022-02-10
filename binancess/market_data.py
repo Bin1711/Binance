@@ -151,7 +151,6 @@ class MarketData:
             print('uploading', self.symbol, utctime, end='\r')
             fromfile = self.get_candlesticks('1m', start_time, start_time + FILE_INTERVAL - INTERVAL // 2)
 
-            # At sometime, Binance do not give us data, so length of body can be 0. If we encounter this case, the function will end  
             if os.path.getsize('./data/' + fromfile + '.json') < 100:
                 print(f'empty response at {utctime} for {fromfile}, please try again later')
                 break
@@ -164,19 +163,14 @@ class MarketData:
     
     def upload_current_data(self):
         """
-        Upload data of this market for the last 60 mins to drive
+        Upload data of this market for the last {FILE_INTERVAL} to drive
         """
-        start_time = int(datetime.now().timestamp() * 1000 - 2 * INTERVALS['h'])
-        prev_time = (start_time // FILE_INTERVAL - 1) * FILE_INTERVAL
+        start_time = int(datetime.now().timestamp() * 1000 - 2 * FILE_INTERVAL)
         start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
-
-        prev_file = self.get_filename(prev_time)
-        if gdrive.download_file_from_drive(prev_file, self.symbol):
-            with open(f'./data/{self.symbol}.json') as f:
-                if len(json.load(f)) < (FILE_INTERVAL / INTERVAL):
-                    self.upload_old_data(prev_time)
-        else:
-            self.upload_old_data(start_time)
+        gdrive.delete_file(None , start_time, self.from_symbol + self.to_symbol)
+        gdrive.delete_file(None , start_time + FILE_INTERVAL, self.from_symbol + self.to_symbol)
+        gdrive.delete_file(None , start_time + 2 * FILE_INTERVAL, self.from_symbol + self.to_symbol)
+        self.upload_old_data(start_time)
 
 
 ### DEVELOPING

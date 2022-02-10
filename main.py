@@ -11,22 +11,4 @@ from toolss import convert
 # btc.upload_current_data()
 
 # should be of size 1441 x 6
-data = get_data.get_data(['BTCUSDT','ADAUSDT','ETHUSDT'],"15min","2018-09-03","2022-01-01")
-print(data['BTCUSDT'])
-
-
-
-print("NEXT")
-
-
-
-print(data["ADAUSDT"])
-
-
-
-print("NEXT")
-
-
-
-
-print(data["ETHUSDT"])
+gdrive.delete_file("SOLUSDT_2021-02-04.json")

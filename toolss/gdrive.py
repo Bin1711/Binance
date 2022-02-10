@@ -69,3 +69,19 @@ def get_file(filename:str=None, time=None, symbol:str=None):
     print(filename)
     file_list = drive.ListFile({'q': f"title='{filename}' and trashed=false"}).GetList()
     return file_list[0] if len(file_list) != 0 else None
+
+def delete_file(filename:str=None, time=None, symbol:str=None):
+    """
+    Delete file in database folder in google drive with filename
+    """
+    if filename is None:
+        if type(time) == int:
+            time = convert.timestampms_to_utc(time)
+        filename = symbol + '_' + time +'.json'
+    print(filename)
+    if get_file(filename) is None:
+        print("Deleting file do not exist")
+    else:
+        id = get_file(filename)['id']
+        file1 = drive.CreateFile({'id': id})
+        file1.Trash()
