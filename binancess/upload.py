@@ -20,4 +20,8 @@ def upload_current_data() -> None:
     Upload data of all markets in const.COINS for the last 60 mins to drive
     """
     for m in markets:
+<<<<<<< HEAD
         m.upload_current_data()
+=======
+        m.upload_current_data()
+>>>>>>> 52f5ccda003b4e7b760d79305c48ab2d1a3314cc

@@ -1,0 +1,2 @@
+from binancess.upload import upload_current_data
+upload_current_data()
