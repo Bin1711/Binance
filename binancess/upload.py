@@ -19,5 +19,5 @@ def upload_current_data() -> None:
     """
     Upload data of all markets in const.COINS for the last 60 mins to drive
     """
-    for m in markets.values():
+    for m in markets:
         m.upload_current_data()
