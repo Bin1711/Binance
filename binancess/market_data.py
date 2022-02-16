@@ -133,12 +133,11 @@ class MarketData:
         Upload old data of this market to drive
         """
         end_time = (int(datetime.now().timestamp()) * 1000) // FILE_INTERVAL * FILE_INTERVAL
-        
-        resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
-        if len(resp) == 0:
-            return
-        start_time = resp[0][0] // FILE_INTERVAL * FILE_INTERVAL
-
+        if start_time == 0:
+            resp = json.loads(self.get_candlesticks_with_limit('1m', start_time, end_time, 60))
+            if len(resp) == 0:
+                return
+            start_time = resp[0][0] // FILE_INTERVAL * FILE_INTERVAL
         while start_time < end_time:
             utctime = convert.timestampms_to_utc(start_time)
             tofile = self.get_filename(utctime)
@@ -155,7 +154,7 @@ class MarketData:
                 print(f'empty response at {utctime} for {fromfile}, please try again later')
                 break
 
-            gdrive.upload_file_to_drive(fromfile, tofile)
+            gdrive.upload_file_to_database(fromfile, tofile)
             start_time += FILE_INTERVAL
 
         print('uploaded', self.symbol, 'until time', convert.timestampms_to_utc(end_time, '%Y-%m-%d %H:%M:%S'), ' ' * 10)
@@ -165,20 +164,8 @@ class MarketData:
         """
         Upload data of this market for the last {FILE_INTERVAL} to drive
         """
-        start_time = int(datetime.now().timestamp() * 1000 - 2 * FILE_INTERVAL)
-        start_time = start_time // FILE_INTERVAL * FILE_INTERVAL
-        gdrive.delete_file(None , start_time, self.from_symbol + self.to_symbol)
-        gdrive.delete_file(None , start_time + FILE_INTERVAL, self.from_symbol + self.to_symbol)
-        gdrive.delete_file(None , start_time + 2 * FILE_INTERVAL, self.from_symbol + self.to_symbol)
+        start_time = int(datetime.now().timestamp() * 1000 // FILE_INTERVAL * FILE_INTERVAL - 2 * FILE_INTERVAL)
         self.upload_old_data(start_time)
-
-
-### DEVELOPING
-    def realTimeUpdating(self): 
-        tmpEndDate = str(int(datetime.now().timestamp())*1000)
-        while True: 
-            self.get_candlesticks("1m","")
-### DEVELOPING
 
 
 ### Need to comment

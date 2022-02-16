@@ -11,4 +11,4 @@ from toolss import convert
 # btc.upload_current_data()
 
 # should be of size 1441 x 6
-gdrive.delete_file("SOLUSDT_2021-02-04.json")
+upload.upload_current_data()

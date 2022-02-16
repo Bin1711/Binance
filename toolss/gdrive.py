@@ -35,7 +35,7 @@ def upload_to_drive(start_time: int, symbol: str, data:str ):
 
 
 
-def upload_file_to_drive(fromfile: str, tofile: str):
+def upload_file_to_database(fromfile: str, tofile: str):
     fromfile += '.json'
     tofile += '.json'
     file_list = drive.ListFile({'q': f"title='{tofile}' and trashed=false"}).GetList()
@@ -78,9 +78,8 @@ def delete_file(filename:str=None, time=None, symbol:str=None):
         if type(time) == int:
             time = convert.timestampms_to_utc(time)
         filename = symbol + '_' + time +'.json'
-    print(filename)
     if get_file(filename) is None:
-        print("Deleting file do not exist")
+        print(f'{filename} do not exist')
     else:
         id = get_file(filename)['id']
         file1 = drive.CreateFile({'id': id})
