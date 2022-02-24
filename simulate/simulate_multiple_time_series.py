@@ -7,13 +7,14 @@ from pandas import DataFrame, read_csv
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from math import sqrt
-
+import simulatedata
 
 def simulate_open_price_and_close (data):
     """This function will simulate 2 series: open price and close price of 1 symbol at the same time
 
     Params:
-        data : Dataframe of a data contains open and close column 
+        data : Dataframe of a data contains open and close column
+        chol : Cholesky 
 
     Returns:
         simulated data
@@ -23,20 +24,56 @@ def simulate_open_price_and_close (data):
     var_open = compute_std(data['open'])
     mean_open = data['open'].mean()
     chol = cholesky.cholesky2(data)
+    inverse_chol = np.linalg.inv(chol)
+    #1st transform
+    transform = transform_forward(data, inverse_chol)
+    order_close, seasonal_order_close = simulatedata.get_order(transform['close'][1:])
+    order_open, seasonal_order_open = simulatedata.get_order(transform['open'][1:])
+    if sum(seasonal_order_close) == 1: seasonal_order_close = (0, 0, 0, 0)
+    model_params_close = simulatedata.fit_sarima(transform['close'][1:], order_close, seasonal_order_close)
+    if sum(seasonal_order_open) == 1: seasonal_order_open = (0, 0, 0, 0)
+    model_params_open = simulatedata.fit_sarima(transform['open'][1:], order_open, seasonal_order_open)
+    t_close = simulatedata.simulate_sarima(transform['close'][1:], order_close, seasonal_order_close, model_params_close, len(data), 1)
+    t_open = simulatedata.simulate_sarima(transform['open'][1:], order_open, seasonal_order_open, model_params_open, len(data), 1)
+    array = []
+    array = np.append(array, t_close)
+    array = np.append(array, t_open)
+    array = np.transpose(array.reshape(2,len(t_close[0])))
+    transform_x_chol = np.transpose(np.matmul(array, chol))
+    transform_back = transform_back(transform_x_chol, chol, var_close, mean_close, var_open, mean_open)
+    return transform_back
+
+def transform_forward (data, chol_or_inverse_chol):
     data1 = []
     data1 = np.append(data1, normalize_or_standardize_data(data['open'], is_normalize= False))
     data1 = np.append(data1, normalize_or_standardize_data(data['close'], is_normalize= False))
-    data1 = data1.reshape(len(data['close']), 2)
-    # data1['open'] = normalize_or_standardize_data(data['open'], is_normalize= False) 
-    # data1['close'] = normalize_or_standardize_data(data['close'], is_normalize= False)
-    data1 = np.transpose(np.matmul(data1, chol))
+    data1 = np.transpose(data1.reshape(2, len(data['close'])))
+    data1 = np.transpose(np.matmul(data1, chol_or_inverse_chol))
     simulate_corr_rets = pd.DataFrame(data)
     simulate_corr_rets['close'] = data1[1]
     simulate_corr_rets['open'] = data1[0]
-    simulate_corr_rets['open'] = mulback_cholesky(simulate_corr_rets['open'],  False, var_open, mean_open)
-    simulate_corr_rets['close'] = mulback_cholesky(simulate_corr_rets['close'], False, var_close,  mean_close)
     return simulate_corr_rets
 
+def transform_back(data, chol_or_inverse_chol, var_close, mean_close, var_open, mean_open):
+    array = []
+    array = np.append(array, data['close'])
+    array = np.append(array, data['open'])
+    array = np.transpose(array.reshape(2,len(data['close'])))
+    transform_back = np.transpose(np.matmul(array, chol_or_inverse_chol))
+    simulate_corr_rets = pd.DataFrame()
+    simulate_corr_rets['close'] = transform_back[1]
+    simulate_corr_rets['open'] = transform_back[0]
+    simulate_corr_rets['open'] = mulback_cholesky(simulate_corr_rets['open'],  False, var_open, mean_open)
+    simulate_corr_rets['close'] = mulback_cholesky(simulate_corr_rets['close'],  False, var_close, mean_close)
+    simulate_corr_rets -= 1
+    return simulate_corr_rets
+
+
+
+def compute_mean (data):
+    # This is just for compute mean of data
+    return data.mean()
+    
 def compute_std (data):
     # this is just for compute the std of data
     return sqrt(np.var(data))
