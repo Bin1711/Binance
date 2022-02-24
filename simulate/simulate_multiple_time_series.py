@@ -9,12 +9,21 @@ from sklearn.preprocessing import StandardScaler
 from math import sqrt
 import simulatedata
 
-def simulate_open_price_and_close (data):
+def simulate_open_and_close (data):
+    dt1 = pd.DataFrame()
+    dt1['close'] = data['close'].pct_change()
+    dt1['open'] = data['open'].pct_change()
+    transform_back = simulate_ret_for_open_and_close (dt1)
+    simulated_price_data = pd.DataFrame()
+    simulated_price_data['close'] = simulatedata.construct_price_series(transform_back['close'], data['close'][0], data.index[0], 1)
+    simulated_price_data['open'] = simulatedata.construct_price_series(transform_back['open'], data['open'][0], data.index[0], 1)
+    return simulated_price_data
+
+def simulate_ret_for_open_and_close (data):
     """This function will simulate 2 series: open price and close price of 1 symbol at the same time
 
     Params:
         data : Dataframe of a data contains open and close column
-        chol : Cholesky 
 
     Returns:
         simulated data
@@ -35,11 +44,9 @@ def simulate_open_price_and_close (data):
     model_params_open = simulatedata.fit_sarima(transform['open'][1:], order_open, seasonal_order_open)
     t_close = simulatedata.simulate_sarima(transform['close'][1:], order_close, seasonal_order_close, model_params_close, len(data), 1)
     t_open = simulatedata.simulate_sarima(transform['open'][1:], order_open, seasonal_order_open, model_params_open, len(data), 1)
-    array = []
-    array = np.append(array, t_close)
-    array = np.append(array, t_open)
-    array = np.transpose(array.reshape(2,len(t_close[0])))
-    transform_x_chol = np.transpose(np.matmul(array, chol))
+    transform_x_chol = pd.DataFrame()
+    transform_x_chol['close'] = t_close[0]
+    transform_x_chol['open'] = t_open[0]
     transform_back = transform_back(transform_x_chol, chol, var_close, mean_close, var_open, mean_open)
     return transform_back
 
