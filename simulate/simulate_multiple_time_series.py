@@ -7,7 +7,7 @@ from pandas import DataFrame, read_csv
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from math import sqrt
-import simulatedata
+from simulate import simulatedata
 
 def simulate_open_and_close (data):
     dt1 = pd.DataFrame()
@@ -47,8 +47,8 @@ def simulate_ret_for_open_and_close (data):
     transform_x_chol = pd.DataFrame()
     transform_x_chol['close'] = t_close[0]
     transform_x_chol['open'] = t_open[0]
-    transform_back = transform_back(transform_x_chol, chol, var_close, mean_close, var_open, mean_open)
-    return transform_back
+    transform_back_ = transform_back(transform_x_chol, chol, var_close, mean_close, var_open, mean_open)
+    return transform_back_
 
 def transform_forward (data, chol_or_inverse_chol):
     data1 = []
