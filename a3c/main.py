@@ -12,6 +12,7 @@ from models.actor_critic import ActorCritic
 from train import train
 
 import test
+# TODO: create params class
 
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--lr', type=float, default=7*1e-7,
@@ -45,7 +46,7 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
 
     #create environment here. For example: env = gym.make("CartPole-v0")
-    shared_model = ActorCritic(dim_state_space, dim_action_space)
+    shared_model = ActorCritic(params)
     shared_model.share_memory()
 
     if args.no_shared:

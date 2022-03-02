@@ -5,7 +5,7 @@ import torch
 import torch.nn.functional as F
 
 from models.actor_critic import ActorCritic
-
+# TODO: edit model.forward, add params
 
 def test(rank, args, shared_model, counter):
     torch.manual_seed(args.seed + rank)
@@ -14,7 +14,7 @@ def test(rank, args, shared_model, counter):
 
     env.seed(args.seed + rank)
 
-    model = ActorCritic(env.observation_space.shape[0], env.action_space)
+    model = ActorCritic(params)
 
     model.eval()
 
