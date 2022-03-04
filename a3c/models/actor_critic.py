@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import torch 
 import torch.nn as nn 
@@ -42,28 +43,39 @@ class ActorCritic(torch.nn.Module):
         
         #define layers, page 12 in paper
         self.conv1 = nn.Conv2d(num_features, num_extracted_features, conv1_kernel, stride = conv1_stride)
+        self.conv1 = self.conv1.double()
         self.conv2 = nn.Conv2d(num_extracted_features, num_extracted_features, conv2_kernel, stride = conv2_stride)
+        self.conv2 = self.conv2.double()
         
         # create temp_X and run through conv layers to defind the shape for fc1
-        temp_X = torch.randn(1, num_features, window, num_features)
+        temp_X = torch.randn(1, num_features, window, num_features, dtype=torch.float64)
         temp_X = self.conv1(temp_X)
         temp_X = self.conv2(temp_X)
         flatten_length = len(temp_X.flatten())
         
         self.fc1 = nn.Linear(flatten_length, dim_model)
+        self.fc1 = self.fc1.double()
         
         self.self_attention_encoder1 = attention.SelfAttentionEncoderLayer(dim_model, dim_inner_hidden, qty_head, dim_k, dim_v, dropout, attn_dropout)
         self.self_attention_encoder2 = attention.SelfAttentionEncoderLayer(dim_model, dim_inner_hidden, qty_head, dim_k, dim_v, dropout, attn_dropout)
         self.self_attention_encoder3 = attention.SelfAttentionEncoderLayer(dim_model, dim_inner_hidden, qty_head, dim_k, dim_v, dropout, attn_dropout)
 
         self.critic_linear = nn.Linear(num_assets*dim_model, num_assets)
-        self.actor_linear = nn.Linear(num_assets*dim_model, num_assets)
-        self.actor_softmax = nn.Softmax()
+        self.critic_linear = self.critic_linear.double()
+        
+        self.actor_linear_mu = nn.Linear(num_assets*dim_model, num_assets)
+        self.actor_linear_mu = self.actor_linear_mu.double()
+        
+        self.actor_linear_std = nn.Linear(num_assets*dim_model, num_assets)
+        self.actor_linear_std = self.actor_linear_std.double()
+        
+        self.actor_softplus = nn.Softplus()
 
         self.apply(weights_init) # initilizing the weights of the model with random weights
         
-        self.actor_linear.bias.data.fill_(0) # initializing the actor bias with zeros
-        self.critic_linear.bias.data.fill_(0) # initializing the critic bias with zeros
+        self.actor_linear_mu.bias.data.fill_(0.) # initializing the actor bias with zeros
+        self.actor_linear_std.bias.data.fill_(0.) # initializing the actor bias with zeros
+        self.critic_linear.bias.data.fill_(0.) # initializing the critic bias with zeros
 
     def forward(self, inputs):
         # inputs.shape = (num_assets, window, features)
@@ -71,18 +83,37 @@ class ActorCritic(torch.nn.Module):
         for i in range(inputs.shape[0]):
             x = inputs[i] # x.shape = (window, features)
             x = x.repeat(x.shape[1], 1, 1) # (window, features) -> (features, window, features) |||| (channel_in = features)
-            x = F.elu(self.conv1(x.unsqueeze(0))) # (batch, channel_out, H_out, W_out)
-            x = F.elu(self.conv2(x)) # (batch, channel_out, H_out, W_out)
+            x = F.elu(self.conv1(x.unsqueeze(0).double())) # (batch, channel_out, H_out, W_out)
+            x = F.elu(self.conv2(x.double())) # (batch, channel_out, H_out, W_out)
             x = self.fc1(x.flatten()) # dim_model
-            extracted_features.append(x.flatten())
+            extracted_features.append(x.flatten().unsqueeze(0))
             
-        extracted_features = torch.tensor(extracted_features).unsqueeze(0) # (batch, num_assets, dim_model)
+        extracted_features = torch.cat(extracted_features).unsqueeze(0).double() # (batch, num_assets, dim_model)
         
         x, attention = self.self_attention_encoder1(extracted_features)
         x, attention = self.self_attention_encoder2(x)
         x, attention = self.self_attention_encoder3(x)
         
-        act = self.actor_linear(x.flatten())
-        act = self.actor_softmax(act)
+        mu = self.actor_linear_mu(x.flatten())
+        std = self.actor_linear_std(x.flatten())
+        var = self.actor_softplus(std)
+        
         value = self.critic_linear(x.flatten())
-        return act, value 
+        return mu, var, value.mean()
+    
+    def act(self, state):
+        mu, var, value = self.forward(state)
+        
+        mu_ = mu.detach().numpy()
+        std = torch.sqrt(var).detach().numpy()
+        
+        action = np.random.normal(mu_, std)
+        return torch.tensor(action, dtype=torch.float64), mu, var, value
+    
+    def calc_logprob(self, mu, var, action):
+        p1 = - ((mu - action)**2) / (2*var.clamp(min=0.001))
+        p2 = - torch.log(torch.sqrt(2*math.pi*var))
+        return (p1 + p2).mean()
+    
+    def calc_entropy(self, mu, var, action):
+        return (-(torch.log(2*math.pi*var)+1)/2).mean()

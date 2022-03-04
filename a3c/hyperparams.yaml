@@ -1,0 +1,32 @@
+syms:
+    - ADAUSDT
+    - BCHUSDT
+    - BNBUSDT
+    - BTCUSDT
+    - DOGEUSDT
+    - EOSUSDT
+    - ETHUSDT
+    - LTCUSDT
+
+window: 360
+
+frequency: 6H
+
+num_extracted_features: 16
+
+conv1: !!python/tuple [!!python/tuple [8,1], 4]
+conv2: !!python/tuple [!!python/tuple [5,1], 2]
+
+dim_model: 400
+dim_inner_hidden: 400
+
+qty_head: 8
+dim_k: 400
+dim_v: 400
+
+dropout: 0.1
+attn_dropout: 0.1
+
+time_budget: !!python/tuple [0,12]
+
+start_date: 2020-01-01 00:00:00

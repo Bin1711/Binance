@@ -5,15 +5,23 @@ import os
 
 import torch
 import torch.multiprocessing as mp
+from pathos.threading import ThreadPool
 
 import my_optim
 
 from models.actor_critic import ActorCritic
-from train import train
+from training import train
+from testing import test
 
-import test
-# TODO: create params class
+from params import Params
 
+
+def train_or_test(rank, args, shared_model, params, counter, lock, optimizer):
+    if rank == 0:
+        test(rank, args, shared_model, params, counter, lock, optimizer)
+    else:
+        train(rank, args, shared_model, params, counter, lock, optimizer)
+    
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--lr', type=float, default=7*1e-7,
                     help='learning rate (default: 7x10^-7)')
@@ -29,14 +37,15 @@ parser.add_argument('--max-grad-norm', type=float, default=50,
                     help='value loss coefficient (default: 50)')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
-parser.add_argument('--num-processes', type=int, default=16,
+parser.add_argument('--num-processes', type=int, default=12,
                     help='how many workers to use (default: 4)')
-parser.add_argument('--num-steps', type=int, default=20,
+parser.add_argument('--num-steps', type=int, default=2500,
                     help='number of forward steps in A3C (default: 20)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--no-shared', default=False,
+parser.add_argument('--no-shared', default=True,
                     help='use an optimizer without shared momentum.')
+
 
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -44,30 +53,33 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     torch.manual_seed(args.seed)
-
-    #create environment here. For example: env = gym.make("CartPole-v0")
+    
+    params = Params()
+    
     shared_model = ActorCritic(params)
-    shared_model.share_memory()
-
+    shared_model.share_memory()    
+    
     if args.no_shared:
         optimizer = None
     else:
         optimizer = my_optim.SharedAdam(shared_model.parameters(), lr=args.lr)
         optimizer.share_memory()
-
-    processes = []
-
+        
     counter = mp.Value('i', 0)
     lock = mp.Lock()
 
-    p = mp.Process(target=test, args=(args.num_processes, args, shared_model, counter))
-    p.start()
-    processes.append(p)
-
-    for rank in range(0, args.num_processes):
-        p = mp.Process(target=train, args=(rank, args, shared_model, counter, lock, optimizer))
-        p.start()
-        processes.append(p)
-    for p in processes:
-        p.join()
-
+    pool = ThreadPool(args.num_processes-1)
+    
+    for _ in pool.imap(train_or_test, [i for i in range(args.num_processes)],
+                                       [args] * args.num_processes, 
+                                       [shared_model] * args.num_processes,
+                                       [params] * args.num_processes,
+                                       [counter] * args.num_processes,
+                                       [lock] * args.num_processes,
+                                       [optimizer] * args.num_processes):
+        if _ is not None:
+            R = _
+        continue
+        
+    pool.close()
+    pool.join()

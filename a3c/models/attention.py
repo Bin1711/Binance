@@ -11,7 +11,7 @@ class ScaledDotProductAttention(nn.Module):
         # root square of dimension size
         super(ScaledDotProductAttention, self).__init__()
         self.temper = np.power(dim_model, 0.5)
-        self.softmax = nn.Softmax()
+        self.softmax = nn.Softmax(dim=1)
         self.attention_dropout = nn.Dropout(attn_dropout)
 
     def forward(self, q, k, v):
@@ -32,15 +32,15 @@ class MultiHeadAttention(nn.Module):
         self.dim_v = dim_v
         self.dim_model = dim_model
 
-        self.weight_q = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_k))
-        self.weight_k = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_k))
-        self.weight_v = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_v))        
+        self.weight_q = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_k)).double()
+        self.weight_k = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_k)).double()
+        self.weight_v = nn.Parameter(torch.FloatTensor(qty_head, dim_model, dim_v)).double()        
 
         self.attention_model = ScaledDotProductAttention(dim_model, attn_dropout=attn_dropout)
 
-        self.layer_norm = nn.LayerNorm(dim_model)
+        self.layer_norm = nn.LayerNorm(dim_model).double()
         # V vectors of each head are concatenated
-        self.projection = nn.Linear(qty_head * dim_v, dim_model)
+        self.projection = nn.Linear(qty_head * dim_v, dim_model).double()
 
         self.dropout = nn.Dropout(dropout)
 
@@ -57,21 +57,21 @@ class MultiHeadAttention(nn.Module):
         _, v_len, _ = v.size()
 
         # Reshaping considering number of heads
-        q_vector = q.repeat(self.qty_head, 1, 1).view(self.qty_head, -1, self.dim_model)
-        k_vector = k.repeat(self.qty_head, 1, 1).view(self.qty_head, -1, self.dim_model)
-        v_vector = v.repeat(self.qty_head, 1, 1).view(self.qty_head, -1, self.dim_model)
-
-        q_vector = torch.bmm(q_vector, self.weight_q).view(-1, q_len, self.dim_k)
-        k_vector = torch.bmm(k_vector, self.weight_k).view(-1, k_len, self.dim_k)
-        v_vector = torch.bmm(v_vector, self.weight_v).view(-1, v_len, self.dim_v)
+        q_vector = q.repeat(self.qty_head, 1, 1).double()
+        k_vector = k.repeat(self.qty_head, 1, 1).double()
+        v_vector = v.repeat(self.qty_head, 1, 1).double()
+        
+        q_vector = torch.bmm(q_vector, self.weight_q).double()
+        k_vector = torch.bmm(k_vector, self.weight_k).double()
+        v_vector = torch.bmm(v_vector, self.weight_v).double()
 
         outputs, attentions = self.attention_model(q_vector, k_vector, v_vector)
 
-        outputs = torch.cat(torch.split(outputs, batch_size, dim=0), dim=-1)
-        outputs = self.projection(outputs)
-        outputs = self.dropout(outputs)
+        outputs = torch.cat(torch.split(outputs, batch_size, dim=0), dim=-1).double()
+        outputs = self.projection(outputs).double()
+        outputs = self.dropout(outputs).double()
 
-        return self.layer_norm(outputs + residual), attentions
+        return self.layer_norm(outputs + residual).double(), attentions
 
 class PositionwiseFeedForward(nn.Module):
     ''' A two-feed-forward-layer module '''
@@ -79,20 +79,27 @@ class PositionwiseFeedForward(nn.Module):
     def __init__(self, dim_hidden, dim_inner_hidden, dropout=0.1):
         super(PositionwiseFeedForward, self).__init__()
         self.layer_1 = nn.Conv1d(dim_hidden, dim_inner_hidden, 1)  # position-wise
+        self.layer_1 = self.layer_1.double()
+        
         self.layer_2 = nn.Conv1d(dim_inner_hidden, dim_hidden, 1)  # position-wise
+        self.layer_2 = self.layer_2.double()
+        
         self.dropout = nn.Dropout(dropout)
         self.layer_norm = nn.LayerNorm(dim_hidden)
+        self.layer_norm = self.layer_norm.double()
+        
         self.relu = nn.ReLU()
+        self.relu = self.relu.double()
 
     def forward(self, x):
-        residual = x
+        residual = x = x.double()
         # print("Input of fnn {}".format(x.size()))
         # print("transposed Input of fnn {}".format(x.transpose(1, 2).size()))
-        output = self.relu(self.layer_1(x.transpose(1, 2)))
+        output = self.relu(self.layer_1(x.transpose(1, 2).double()).double())
         # print("First convolution of fnn {}".format(output.size()))
-        output = self.layer_2(output).transpose(2, 1)
+        output = self.layer_2(output.double()).transpose(2, 1)
         # print("Second convolution of fnn {}".format(output.size()))
-        output = self.dropout(output)
+        output = self.dropout(output.double())
         return self.layer_norm(output + residual)
 
 
@@ -101,8 +108,7 @@ class SelfAttentionEncoderLayer(nn.Module):
 
     def __init__(self, dim_model, dim_inner_hidden, qty_head, dim_k, dim_v, dropout=0.1, attn_dropout=0.1):
         super(SelfAttentionEncoderLayer, self).__init__()
-        self.self_attention = MultiHeadAttention(qty_head, dim_model, dim_k,
-                                                 dim_v, dropout=dropout, attn_dropout=attn_dropout)
+        self.self_attention = MultiHeadAttention(qty_head, dim_model, dim_k, dim_v, dropout=dropout, attn_dropout=attn_dropout)
         self.feedforward = PositionwiseFeedForward(dim_model, dim_inner_hidden, dropout)
 
     def forward(self, input_tensor):
