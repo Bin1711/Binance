@@ -11,6 +11,8 @@ class Params():
         with open('hyperparams.yaml') as file:
             hyperparams = yaml.full_load(file)
         
+        self.hyperparams = hyperparams
+        
         self.syms = hyperparams['syms']
         self.num_assets = len(self.syms)
         
@@ -35,9 +37,15 @@ class Params():
         self.attn_dropout = hyperparams['attn_dropout']
         
         self.start_time = datetime.now()
-        days, hours = hyperparams['time_budget']
-        self.end_time = self.start_time + relativedelta(days = days, hours = hours)
+        days, hours, minutes = hyperparams['time_budget']
+        self.end_time = self.start_time + relativedelta(days = days, hours = hours, minutes=minutes)
         
         self.start_date = hyperparams['start_date']
         
         self.data = get_data(self.syms, self.freq, self.start_date)
+    
+    def reset_time(self):
+        self.start_time = datetime.now()
+        days, hours, minutes = self.hyperparams['time_budget']
+        self.end_time = self.start_time + relativedelta(days = days, hours = hours, minutes=minutes)
+        
