@@ -13,13 +13,14 @@ def simulate_open_and_close (data):
     dt1 = pd.DataFrame()
     dt1['close'] = data['close'].pct_change()
     dt1['open'] = data['open'].pct_change()
-    transform_back = simulate_ret_for_open_and_close (dt1)
+    chol = cholesky.cholesky2(data)
+    transform_back = simulate_ret_for_open_and_close (dt1, chol)
     simulated_price_data = pd.DataFrame()
     simulated_price_data['close'] = simulatedata.construct_price_series(transform_back['close'], data['close'][0], data.index[0], 1)
     simulated_price_data['open'] = simulatedata.construct_price_series(transform_back['open'], data['open'][0], data.index[0], 1)
     return simulated_price_data
 
-def simulate_ret_for_open_and_close (data):
+def simulate_ret_for_open_and_close (data, chol):
     """This function will simulate 2 series: open price and close price of 1 symbol at the same time
 
     Params:
@@ -32,10 +33,11 @@ def simulate_ret_for_open_and_close (data):
     mean_close = data['close'].mean()
     var_open = compute_std(data['open'])
     mean_open = data['open'].mean()
-    chol = cholesky.cholesky2(data)
+    # chol = cholesky.cholesky2(data)
     inverse_chol = np.linalg.inv(chol)
     #1st transform
     transform = transform_forward(data, inverse_chol)
+    # transform = data
     order_close, seasonal_order_close = simulatedata.get_order(transform['close'][1:])
     order_open, seasonal_order_open = simulatedata.get_order(transform['open'][1:])
     if sum(seasonal_order_close) == 1: seasonal_order_close = (0, 0, 0, 0)
@@ -45,8 +47,9 @@ def simulate_ret_for_open_and_close (data):
     t_close = simulatedata.simulate_sarima(transform['close'][1:], order_close, seasonal_order_close, model_params_close, len(data), 1)
     t_open = simulatedata.simulate_sarima(transform['open'][1:], order_open, seasonal_order_open, model_params_open, len(data), 1)
     transform_x_chol = pd.DataFrame()
-    transform_x_chol['close'] = t_close[0]
-    transform_x_chol['open'] = t_open[0]
+    transform_x_chol['close'] = t_close
+    transform_x_chol['open'] = t_open
+    # transform_for = transform_forward(transform_x_chol, inverse_chol)
     transform_back_ = transform_back(transform_x_chol, chol, var_close, mean_close, var_open, mean_open)
     return transform_back_
 
@@ -54,8 +57,8 @@ def transform_forward (data, chol_or_inverse_chol):
     data1 = []
     data1 = np.append(data1, normalize_or_standardize_data(data['open'], is_normalize= False))
     data1 = np.append(data1, normalize_or_standardize_data(data['close'], is_normalize= False))
-    data1 = np.transpose(data1.reshape(2, len(data['close'])))
-    data1 = np.transpose(np.matmul(data1, chol_or_inverse_chol))
+    data1 = data1.reshape(2, len(data['close']))
+    data1 = np.matmul(chol_or_inverse_chol, data1)
     simulate_corr_rets = pd.DataFrame(data)
     simulate_corr_rets['close'] = data1[1]
     simulate_corr_rets['open'] = data1[0]
@@ -65,14 +68,12 @@ def transform_back(data, chol_or_inverse_chol, var_close, mean_close, var_open, 
     array = []
     array = np.append(array, data['close'])
     array = np.append(array, data['open'])
-    array = np.transpose(array.reshape(2,len(data['close'])))
-    transform_back = np.transpose(np.matmul(array, chol_or_inverse_chol))
+    array = array.reshape(2,len(data['close']))
+    # transform_back = np.matmul(chol_or_inverse_chol, array)
+    transform_back = array
     simulate_corr_rets = pd.DataFrame()
-    simulate_corr_rets['close'] = transform_back[1]
-    simulate_corr_rets['open'] = transform_back[0]
-    simulate_corr_rets['open'] = mulback_cholesky(simulate_corr_rets['open'],  False, var_open, mean_open)
-    simulate_corr_rets['close'] = mulback_cholesky(simulate_corr_rets['close'],  False, var_close, mean_close)
-    simulate_corr_rets -= 1
+    simulate_corr_rets['open'] = mulback_cholesky(transform_back[0],  False, var_open, mean_open)
+    simulate_corr_rets['close'] = mulback_cholesky(transform_back[1],  False, var_close, mean_close)
     return simulate_corr_rets
 
 
@@ -127,12 +128,12 @@ def mulback_cholesky (data, is_normalize = True, x1 =0, x2 = 0):
     if is_normalize:
         range = x2
         min = x1
-        data1 = data.multiply(range)
-        data1 = data1.add(min)
+        data1 = data + range
+        data1 = data1 + min
         return data1
     else:
         std = x2
         mean = x1
-        data1 = data.multiply(std)
-        data1 = data1.add(mean)
+        data1 = data * std
+        data1 = data1 + mean
         return data1
