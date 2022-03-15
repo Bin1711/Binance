@@ -13,3 +13,8 @@ env
 + reset 
 + get state, action space 
  (Open AI gym)
+ 
+ 
+
+TODO:
++ create environment class

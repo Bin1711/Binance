@@ -103,7 +103,8 @@ def _fit_data_to_df(data, frequency: str):
     
     df['vol x close'] = df['close']*df['volume']
     new_df['VWAP'] = df.groupby(pd.Grouper(key = 'time', freq = frequency))['vol x close'].sum()/new_df['volume']
-
+    
+    new_df.fillna(method='ffill', inplace = True)
     #drop nan
     # new_df.dropna(inplace = True)
 
