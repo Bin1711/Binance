@@ -46,7 +46,7 @@ parser.add_argument('--no-shared', default=True,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--load-params', default=True,
                     help='load parameters or read from pickel.load.')
-parser.add_argument('--load-shared-model', default=True,
+parser.add_argument('--load-shared-model', default=False,
                     help='load model and continue traning.')
 
 if __name__ == '__main__':
