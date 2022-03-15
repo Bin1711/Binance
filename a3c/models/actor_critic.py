@@ -74,7 +74,7 @@ class ActorCritic(torch.nn.Module):
         self.apply(weights_init) # initilizing the weights of the model with random weights
         
         self.actor_linear_mu.bias.data.fill_(0.) # initializing the actor bias with zeros
-        self.actor_linear_std.bias.data.fill_(0.) # initializing the actor bias with zeros
+        self.actor_linear_std.bias.data.fill_(1.) # initializing the actor bias with zeros
         self.critic_linear.bias.data.fill_(0.) # initializing the critic bias with zeros
 
     def forward(self, inputs):

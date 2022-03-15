@@ -1,18 +1,20 @@
 syms:
+    - USDCUSDT
     - ADAUSDT
-    - BCHUSDT
     - BNBUSDT
+    - BCHUSDT
     - BTCUSDT
     - DOGEUSDT
     - EOSUSDT
     - ETHUSDT
     - LTCUSDT
+    - XRPUSDT
 
-window: 360
+window: 540
+frequency: 4H
+fee: 0.004
 
-frequency: 6H
-
-num_extracted_features: 16
+num_extracted_features: 100
 
 conv1: !!python/tuple [!!python/tuple [8,1], 4]
 conv2: !!python/tuple [!!python/tuple [5,1], 2]
@@ -20,7 +22,7 @@ conv2: !!python/tuple [!!python/tuple [5,1], 2]
 dim_model: 400
 dim_inner_hidden: 400
 
-qty_head: 8
+qty_head: 16
 dim_k: 400
 dim_v: 400
 

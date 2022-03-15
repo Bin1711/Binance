@@ -18,8 +18,8 @@ class Params():
         
         self.num_features = 6 #open, high, low, close, volume, VWAP
         self.window = hyperparams['window']
-        
         self.freq = hyperparams['frequency']
+        self.fee = hyperparams['fee']
         
         self.num_extracted_features = hyperparams['num_extracted_features']
         

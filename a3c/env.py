@@ -30,7 +30,7 @@ class Env():
         for i, sym in enumerate(self.params.syms):
             df = self.data[sym]
             df = df[start_:end_].values
-            df = (df - df.mean(axis=0)) / df.std(axis=0)
+            df = df/df.max(axis=0) #(df - df.mean(axis=0)) / df.std(axis=0)
             states.append(df)
             
         return np.array(states)
@@ -43,5 +43,6 @@ class Env():
             df = self.data[sym]
             ret = df.loc[next_date, 'close'] / df.loc[curr_date, 'close'] - 1
             returns.append(ret)
-        
-        return np.dot(returns, action)
+            
+        returns = np.dot(returns, action)
+        return returns*(1 - self.params.fee) if returns >= 0 else returns*(1 + self.params.fee)

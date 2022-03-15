@@ -11,12 +11,13 @@ import my_optim
 
 from models.actor_critic import ActorCritic
 from training import train_and_test
-#from testing import test
+from testing import test
 
 from params import Params
 import pickle
-
+import dill
 import matplotlib.pyplot as plt
+import numpy as np
 
 parser = argparse.ArgumentParser(description='A3C')
 parser.add_argument('--lr', type=float, default=7*1e-7,
@@ -33,18 +34,20 @@ parser.add_argument('--max-grad-norm', type=float, default=50,
                     help='value loss coefficient (default: 50)')
 parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
-parser.add_argument('--num-processes', type=int, default=2,
+parser.add_argument('--num-processes', type=int, default=3,
                     help='how many workers to use (default: 4)')
-parser.add_argument('--num-steps', type=int, default=2500,
+parser.add_argument('--num-steps', type=int, default=6,
                     help='number of forward steps in A3C (default: 20)')
-parser.add_argument('--max-episode-length', type=int, default=2500,
+parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--epoch', type=int, default=10000,
+parser.add_argument('--epoch', type=int, default=20000,
                     help='epoch (default: 100000)')
 parser.add_argument('--no-shared', default=True,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--load-params', default=True,
                     help='load parameters or read from pickel.load.')
+parser.add_argument('--load-shared-model', default=True,
+                    help='load model and continue traning.')
 
 if __name__ == '__main__':
     os.environ['OMP_NUM_THREADS'] = '1'
@@ -54,18 +57,22 @@ if __name__ == '__main__':
     torch.manual_seed(args.seed)
     
     if args.load_params:
-        params = Params()
-        with open('params.pkl', 'wb') as f:
-            pickle.dump(params, f)
-            f.close()
-    else:
-        f = open('params.pkl', 'rb')
+        f = open('alpha/params.pkl', 'rb')
         params = pickle.load(f)
         f.close()
         params.reset_time()
-        
-    shared_model = ActorCritic(params)
-    shared_model.share_memory()    
+    else:
+        params = Params()
+        with open('alpha/params.pkl', 'wb') as f:
+            pickle.dump(params, f)
+            f.close()
+    
+    if args.load_shared_model:
+        with open('alpha/shared_model.pkl', 'rb') as f:
+            shared_model = dill.load(f)
+    else:
+        shared_model = ActorCritic(params)
+        shared_model.share_memory()    
     
     if args.no_shared:
         optimizer = None
@@ -95,12 +102,20 @@ if __name__ == '__main__':
         plt.plot(last_episode_rewards)
         plt.show()
         
-        if _ == 0:    
-            temp = R_L, last_episode_rewards
-        else:
-            print(_)
-        
     pool.close()
     pool.join()
+    with open('alpha/shared_model.pkl', 'wb') as f:
+        dill.dump(shared_model, f)
     
-    #RR, last_episode_rewards = train_and_test(0, args, shared_model, params, counter, lock, optimizer, False)
+    episode_rewards = test(args, shared_model, params)
+    
+    plt.plot(np.cumsum(episode_rewards))
+    plt.show()
+    
+    plt.plot(np.cumprod(np.array(episode_rewards)+1))
+    plt.show()
+    
+    print('Positive count: ', sum([1 for x in episode_rewards if x>0]))
+    print('Negative count: ', sum([1 for x in episode_rewards if x<=0]))
+    print('Positive pct: ', sum([1 for x in episode_rewards if x>0])/len(episode_rewards))
+    

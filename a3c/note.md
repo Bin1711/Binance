@@ -17,6 +17,4 @@ env
  
 
 TODO:
-+ create params class
 + create environment class
-+ edit ActorCritic() in test.py and train.py

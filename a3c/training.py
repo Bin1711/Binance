@@ -4,9 +4,12 @@ from datetime import datetime
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
+import numpy as np
 
 from models.actor_critic import ActorCritic
 from env import Env
+
+import dill
 
 def ensure_shared_grads(model, shared_model):
     for param, shared_param in zip(model.parameters(),
@@ -46,7 +49,7 @@ def _train(rank, args, shared_model, params, counter, lock, optimizer=None):
         rewards = []
         entropies = []
 
-        for step in range(args.num_steps):
+        for step in range(1+np.random.randint(args.num_steps)):
             episode_length += 1
             action, mu, var, value = model.act(state)
             
@@ -106,7 +109,7 @@ def _train(rank, args, shared_model, params, counter, lock, optimizer=None):
 
         ensure_shared_grads(model, shared_model)
         optimizer.step()
-    return rank, All_losses, last_episode_rewards
+    return rank, torch.cat(All_losses).detach().numpy(), last_episode_rewards
 
 def _test(rank, args, shared_model, params, counter, lock, optimizer, sleep = True):
     torch.manual_seed(args.seed + rank)
@@ -157,8 +160,9 @@ def _test(rank, args, shared_model, params, counter, lock, optimizer, sleep = Tr
             episode_rewards = []
             episode_length = 0
             state = env.reset()
-            
-            if sleep: time.sleep(60)
+            with open('alpha/shared_model.pkl', 'wb') as f:
+                dill.dump(shared_model, f)
+            if sleep: time.sleep(60 * 30)
 
         state = torch.from_numpy(state)
     return rank, All_rewards, last_episode_rewards
