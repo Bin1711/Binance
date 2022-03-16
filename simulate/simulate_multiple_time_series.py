@@ -59,21 +59,21 @@ def transform_forward (data, chol_or_inverse_chol):
     data1 = np.append(data1, normalize_or_standardize_data(data['close'], is_normalize= False))
     data1 = data1.reshape(2, len(data['close']))
     data1 = np.matmul(chol_or_inverse_chol, data1)
-    simulate_corr_rets = pd.DataFrame(data)
+    simulate_corr_rets = pd.DataFrame(data).copy()
     simulate_corr_rets['close'] = data1[1]
     simulate_corr_rets['open'] = data1[0]
     return simulate_corr_rets
 
 def transform_back(data, chol_or_inverse_chol, var_close, mean_close, var_open, mean_open):
     array = []
-    array = np.append(array, data['close'])
     array = np.append(array, data['open'])
+    array = np.append(array, data['close'])
     array = array.reshape(2,len(data['close']))
-    # transform_back = np.matmul(chol_or_inverse_chol, array)
-    transform_back = array
+    transform_back = np.matmul(chol_or_inverse_chol, array)
+    # transform_back = array
     simulate_corr_rets = pd.DataFrame()
-    simulate_corr_rets['open'] = mulback_cholesky(transform_back[0],  False, var_open, mean_open)
-    simulate_corr_rets['close'] = mulback_cholesky(transform_back[1],  False, var_close, mean_close)
+    simulate_corr_rets['open'] = mulback_cholesky(transform_back[0],  False, mean_open, var_open)
+    simulate_corr_rets['close'] = mulback_cholesky(transform_back[1],  False, mean_close, var_close)
     return simulate_corr_rets
 
 
