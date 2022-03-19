@@ -10,14 +10,19 @@ from math import sqrt
 from simulate import simulatedata
 
 def simulate_open_and_close (data):
+    data1 = pd.DataFrame()
+    data1['close'] = data['close']/data['open']
+    data1['open'] = data['open']
     dt1 = pd.DataFrame()
-    dt1['close'] = data['close'].pct_change()
-    dt1['open'] = data['open'].pct_change()
-    chol = cholesky.cholesky2(data)
+    dt1['close'] = data1['close'].pct_change()
+    dt1['open'] = data1['open'].pct_change()
+    chol = cholesky.cholesky2(data1)
     transform_back = simulate_ret_for_open_and_close (dt1, chol)
     simulated_price_data = pd.DataFrame()
-    simulated_price_data['close'] = simulatedata.construct_price_series(transform_back['close'], data['close'][0], data.index[0], 1)
-    simulated_price_data['open'] = simulatedata.construct_price_series(transform_back['open'], data['open'][0], data.index[0], 1)
+    simulated_price_data['close'] = simulatedata.construct_price_series(transform_back['close'], data1['close'][0], data.index[0], 1)
+    simulated_price_data['open'] = simulatedata.construct_price_series(transform_back['open'], data1['open'][0], data.index[0], 1)
+    for i in range(len(simulated_price_data['close'])):
+        simulated_price_data['close'][i]=simulated_price_data['close'][i] * simulated_price_data['open'][i]
     return simulated_price_data
 
 def simulate_ret_for_open_and_close (data, chol):
