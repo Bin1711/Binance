@@ -1,3 +1,4 @@
+from math import gamma
 from pandas import DataFrame
 import numpy as np
 
@@ -12,33 +13,37 @@ class Backtest:
     self.trade_per_year = int(self.freq[:-1]) * Backtest.FREQ_SYM[self.freq[-1]]
     self.risk_free = risk_free
 
-  def a_returns(self, returns: list) -> float:
-    """Returns the annualized returns"""
-    return returns[-1] / self.trade_per_year * len(returns)
+  def a_returns(self, data: list) -> float:
+    """Returns the annualized data"""
+    return data[-1] / self.trade_per_year * len(data)
 
-  def a_stddev(self, returns: list) -> float:
+  def a_stddev(self, data: list) -> float:
     """Returns the annualized standard deviation"""
-    return np.std(returns) * np.sqrt(self.trade_per_year)
+    return np.std(data) * np.sqrt(self.trade_per_year)
 
-  def sharpe(self, returns: list) -> float:
+  def sharpe(self, data: list) -> float:
     """Returns the Sharpe Ratio"""
-    return (self.a_returns(returns) - self.risk_free) / self.a_stddev(returns)
+    return (self.a_returns(data) - self.risk_free) / self.a_stddev(data)
 
-  def var(self, returns: list, alpha: float) -> float:
+  def var(self, data: list, alpha: float) -> float:
     """Returns the VaR"""
-    pass
+    return self.F(data, 1 - alpha)
 
-  def cvar(self, returns: list, alpha: list) -> float:
+  def cvar(self, data: list, alpha: float, precision=1000) -> float:
     """Returns the CVaR"""
-    pass
+    dx = np.linspace(0, alpha, precision)
+    y = [self.var(data, x) for x in dx]
+    return - np.trapz(y, dx) / alpha
 
-  def mdd(self, returns: list) -> float:
+  def mdd(self, data: list) -> float:
     """Returns the Maximum Drawdown"""
-    pass
+    intervals = []
+    # TODO
 
-  def calmar(self, returns: list) -> float:
+
+  def calmar(self, data: list) -> float:
     """Returns the Calmar Ratio"""
-    pass
+    return (self.a_returns(data) - self.risk_free) / self.mdd(data)
 
   def test(self, data: DataFrame):
     """Carry out backtest"""
