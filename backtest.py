@@ -37,8 +37,11 @@ class Backtest:
 
   def mdd(self, data: list) -> float:
     """Returns the Maximum Drawdown"""
-    intervals = []
-    # TODO
+    columns = ['close']
+    wealth_index = (data[columns].pct_change() + 1).cumprod()
+    previous_peaks = wealth_index.cummax()
+    drawdowns = (wealth_index - previous_peaks)/previous_peaks
+    return drawdowns.min()
 
 
   def calmar(self, data: list) -> float:
