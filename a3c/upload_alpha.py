@@ -36,6 +36,7 @@ class Alpha():
         action /= (n+1)
         
         action = F.softmax(action, dim = 0)
+        #action = F.normalize(action, p = 1, dim = 0)
         action = action.numpy()
         
         allocation = {}
@@ -45,9 +46,9 @@ class Alpha():
 
 
 folder_name = 'Alpha' #name of folder on drive
-alpha_name = 'alpha_002.pkl' # name of alpha on drive
+alpha_name = 'alpha_005.pkl' # name of alpha on drive
 path_to_model = 'alpha/shared_model.pkl'
-path_to_alpha = 'alpha/alpha.pkl'
+path_to_alpha = 'alpha/' + alpha_name
 
 # read object model
 with open(path_to_model, 'rb') as f:

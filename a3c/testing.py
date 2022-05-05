@@ -30,6 +30,7 @@ def test(args, shared_model, params):
             action, mu, var, value = model.act(state)
             
         action = F.softmax(action, dim = 0)
+        #action = F.normalize(action, p = 1, dim = 0)
 
         state, reward, done = env.step(action.numpy())
         state = torch.from_numpy(state)

@@ -95,7 +95,7 @@ class ActorCritic(torch.nn.Module):
         x, attention = self.self_attention_encoder3(x)
         
         mu = self.actor_linear_mu(x.flatten())
-        std = self.actor_linear_std(x.flatten())
+        std = self.actor_linear_std(x.flatten())*0.01
         var = self.actor_softplus(std)
         
         value = self.critic_linear(x.flatten())

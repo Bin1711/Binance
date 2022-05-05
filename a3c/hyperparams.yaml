@@ -1,34 +1,34 @@
 syms:
     - USDCUSDT
-    - ADAUSDT
-    - BNBUSDT
     - BCHUSDT
     - BTCUSDT
     - DOGEUSDT
-    - EOSUSDT
     - ETHUSDT
     - LTCUSDT
-    - XRPUSDT
+    - CRVUSDT
+    - FTMUSDT
+    - LINKUSDT
+    - SOLUSDT
 
 window: 540
 frequency: 4H
-fee: 0.004
+fee: 0.002
 
-num_extracted_features: 100
+num_extracted_features: 300
 
 conv1: !!python/tuple [!!python/tuple [8,1], 4]
 conv2: !!python/tuple [!!python/tuple [5,1], 2]
 
-dim_model: 400
-dim_inner_hidden: 400
+dim_model: 600
+dim_inner_hidden: 600
 
 qty_head: 16
-dim_k: 400
-dim_v: 400
+dim_k: 600
+dim_v: 600
 
 dropout: 0.1
 attn_dropout: 0.1
 
 time_budget: !!python/tuple [0,12,0]
 
-start_date: 2020-01-01 00:00:00
+start_date: 2020-08-16 00:00:00

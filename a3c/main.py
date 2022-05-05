@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 parser = argparse.ArgumentParser(description='A3C')
-parser.add_argument('--lr', type=float, default=7*1e-7,
+parser.add_argument('--lr', type=float, default=1*1e-6,
                     help='learning rate (default: 7x10^-7)')
 parser.add_argument('--gamma', type=float, default=0.99,
                     help='discount factor for rewards (default: 0.99)')
@@ -36,17 +36,17 @@ parser.add_argument('--seed', type=int, default=1,
                     help='random seed (default: 1)')
 parser.add_argument('--num-processes', type=int, default=3,
                     help='how many workers to use (default: 4)')
-parser.add_argument('--num-steps', type=int, default=6,
+parser.add_argument('--num-steps', type=int, default=1,
                     help='number of forward steps in A3C (default: 20)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
-parser.add_argument('--epoch', type=int, default=20000,
+parser.add_argument('--epoch', type=int, default=40000,
                     help='epoch (default: 100000)')
 parser.add_argument('--no-shared', default=True,
                     help='use an optimizer without shared momentum.')
 parser.add_argument('--load-params', default=True,
                     help='load parameters or read from pickel.load.')
-parser.add_argument('--load-shared-model', default=False,
+parser.add_argument('--load-shared-model', default=True,
                     help='load model and continue traning.')
 
 if __name__ == '__main__':
@@ -54,7 +54,7 @@ if __name__ == '__main__':
     os.environ['CUDA_VISIBLE_DEVICES'] = ""
     args = parser.parse_args()
 
-    torch.manual_seed(args.seed)
+    #torch.manual_seed(args.seed)
     
     if args.load_params:
         f = open('alpha/params.pkl', 'rb')
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     if args.load_shared_model:
         with open('alpha/shared_model.pkl', 'rb') as f:
             shared_model = dill.load(f)
+            f.close()
     else:
         shared_model = ActorCritic(params)
         shared_model.share_memory()    
@@ -106,6 +107,7 @@ if __name__ == '__main__':
     pool.join()
     with open('alpha/shared_model.pkl', 'wb') as f:
         dill.dump(shared_model, f)
+        f.close()
     
     episode_rewards = test(args, shared_model, params)
     
@@ -118,4 +120,5 @@ if __name__ == '__main__':
     print('Positive count: ', sum([1 for x in episode_rewards if x>0]))
     print('Negative count: ', sum([1 for x in episode_rewards if x<=0]))
     print('Positive pct: ', sum([1 for x in episode_rewards if x>0])/len(episode_rewards))
+    print('Sharpe: ', sum(episode_rewards)/len(episode_rewards)*np.sqrt(356*6)/np.std(episode_rewards))
     

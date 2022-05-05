@@ -57,6 +57,7 @@ def _train(rank, args, shared_model, params, counter, lock, optimizer=None):
             entropy = model.calc_entropy(mu, var, action)
             
             action = F.softmax(action, dim = 0)
+            #action = F.normalize(action, p = 1, dim = 0)
             action = action.detach()
 
             state, reward, done = env.step(action.numpy())
@@ -141,6 +142,7 @@ def _test(rank, args, shared_model, params, counter, lock, optimizer, sleep = Tr
             action, mu, var, value = model.act(state)
             
         action = F.softmax(action, dim = 0)
+        #action = F.normalize(action, p = 1, dim = 0)
 
         state, reward, done = env.step(action.numpy())
         done = done or episode_length >= args.max_episode_length

@@ -32,7 +32,7 @@ class Env():
             df = df[start_:end_].values
             df = df/df.max(axis=0) #(df - df.mean(axis=0)) / df.std(axis=0)
             states.append(df)
-            
+        
         return np.array(states)
     
     def get_reward(self, action):
@@ -43,6 +43,10 @@ class Env():
             df = self.data[sym]
             ret = df.loc[next_date, 'close'] / df.loc[curr_date, 'close'] - 1
             returns.append(ret)
-            
+            if sym == 'BTCUSDT': benchmark = ret
+        
+        avg = np.mean(returns)
+        best_sym = np.argmax(returns)
         returns = np.dot(returns, action)
+        return np.sign(returns) + np.sign(returns - benchmark) + np.sign(returns - avg) - (-5)**(action.argmax() == best_sym)
         return returns*(1 - self.params.fee) if returns >= 0 else returns*(1 + self.params.fee)
